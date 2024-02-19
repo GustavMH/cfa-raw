@@ -17,7 +17,7 @@ def rgb_to_cfa(img: np.ndarray, kernel: np.ndarray):
     if not c == kc:
         raise Exception("Differing number of kernel and image channels!")
 
-    res = np.zeros((h, w))
+    res = np.zeros((h, w), img.dtype)
 
     for channel in range(c):
         for off_w, r in enumerate(kernel[channel]):
