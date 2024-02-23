@@ -2,8 +2,6 @@
 
 import numpy as np
 
-
-
 def rgb_to_cfa(img: np.ndarray, kernel: np.ndarray):
     """ Create a 2d np.array conceptually equivalent to
     'conv2d^T(conv2d(img, kernel), kernel).sum(dim=2)'
@@ -59,3 +57,5 @@ def sparse_ones(shape: tuple, coords: list):
         arr[coor] = 1.0
 
     return arr
+
+rgb_kf  = sparse_ones((3,2,2), [(0,0,1),(1,0,0),(2,1,0),(1,1,1)])
