@@ -3,6 +3,7 @@
 import numpy as np
 import torch
 
+
 def salt_pepper_noise(img, density=.3, sp_ratio=.5, seed=[1,2,3]):
     h, w, c = img.shape
     d_max   = np.iinfo(img.dtype).max
@@ -28,29 +29,6 @@ def salt_pepper_noise(img, density=.3, sp_ratio=.5, seed=[1,2,3]):
 
     return res
 
-def salt_pepper_noise_torch(img, density=.3, sp_ratio=.5, seed=[1,2,3], device="cpu"):
-    c, h, w = img.shape
-    d_max   = torch.iinfo(img.dtype).max
-
-    n_speckles = w*h*density
-    n_salt     = int(n_speckles*sp_ratio)
-    n_pepper   = int(n_speckles*(1-sp_ratio))
-
-    gen = torch.Generator(device=device)
-
-    def rand_coords(n):
-        unique_rand = torch.randperm(h*w)[:n]
-        return [(x % h, x // h) for x in unique_rand]
-
-    res = img.clone()
-
-    for x, y in rand_coords(n_salt):
-        res[:, x, y] = d_max
-
-    for x, y in rand_coords(n_pepper):
-        res[:, x, y] = 0
-
-    return res
 
 def gaussian_noise(img, bias=.0, scale=.1, input_scale=1, seed=[1,2,3]):
     h, w, c = img.shape
@@ -62,3 +40,53 @@ def gaussian_noise(img, bias=.0, scale=.1, input_scale=1, seed=[1,2,3]):
     res = input_scale * img.astype(np.int64) + noise.astype(np.int64)
 
     return np.clip(res, 0, d_max).astype(img.dtype)
+
+
+def torch_type_helper(tensor):
+    if torch.is_floating_point(tensor):
+        return torch.finfo, torch.float64
+    elif not torch.is_complex(tensor):
+        return torch.iinfo, torch.int64
+    else:
+        raise "Not float or int"
+
+
+def gaussian_noise_torch(img, bias=.0, std=.1, input_scale=1, seed=[1,2,3], device="cpu"):
+    info, double_type = torch_type_helper(img)
+
+    c, h, w = img.shape
+    d_max   = info(img.dtype).max
+
+    gen     = torch.Generator(device=device)
+    noise   = torch.normal(bias * d_max, std * d_max, (h, w), generator=gen).expand(c, h, w)
+
+    res = input_scale * img.to(double_type) + noise.to(double_type)
+
+    return np.clip(res, 0, d_max).to(img.dtype)
+
+
+def salt_pepper_noise_torch(img, density=.3, sp_ratio=.5, seed=[1,2,3], device="cpu"):
+    info, double_type = torch_type_helper(img)
+
+    c, h, w = img.shape
+    d_max   = info(img.dtype).max
+
+    n_speckles = w*h*density
+    n_salt     = int(n_speckles*sp_ratio)
+    n_pepper   = int(n_speckles*(1-sp_ratio))
+
+    gen = torch.Generator(device=device)
+
+    def rand_coords(n):
+        unique_rand = torch.randperm(h*w, generator=gen)[:n]
+        return [(x % h, x // h) for x in unique_rand]
+
+    res = img.clone()
+
+    for x, y in rand_coords(n_salt):
+        res[:, x, y] = d_max
+
+    for x, y in rand_coords(n_pepper):
+        res[:, x, y] = 0
+
+    return res
