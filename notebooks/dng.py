@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 from pidng.core import RAW2DNG, DNGTags, Tag
 from pidng.defs import *
 
@@ -14,7 +16,7 @@ ccm1 = [[0,1], [0,1], [0,1],
         [0,1], [0,1], [0,1],
         [0,1], [0,1], [0,1]]
 
-def saveFile(cfa_img, filename, bpp = 16):
+def write(cfa_img, filename = None, bpp = 16):
     height, width = cfa_img.shape
 
     # set DNG tags.
@@ -47,4 +49,8 @@ def saveFile(cfa_img, filename, bpp = 16):
     # save to dng file.
     r = RAW2DNG()
     r.options(t, path="", compress=False) # Enabling compression crashes Jupyter
-    r.convert(cfa_img, filename=filename)
+
+    if filename:
+        r.convert(cfa_img, filename=filename)
+    else:
+        sys.stdout.write(r.convert(cfa_img))
