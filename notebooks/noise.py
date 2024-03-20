@@ -3,12 +3,24 @@
 import numpy as np
 import torch
 
-
-def salt_pepper_noise(img, density=.3, sp_ratio=.5, seed=[1,2,3]):
+def mult_speckle_noise(img, amount=.3):
+    # for J = I + n*I many often use Gauss distributed n
+    # rather than the real exponential distribution
     h, w, c = img.shape
     d_max   = np.iinfo(img.dtype).max
 
-    n_speckles = w*h*density
+    gen     = np.random.default_rng()
+    noise   = np.expand_dims(gen.exponential(1/amount, (h, w)), 2)
+
+    res     = img.astype(np.int64) * noise.astype(np.int64)
+
+    return np.clip(res, 0, d_max).astype(img.dtype)
+
+def salt_pepper_noise(img, amount=.3, sp_ratio=.5, seed=[1,2,3]):
+    h, w, c = img.shape
+    d_max   = np.iinfo(img.dtype).max
+
+    n_speckles = w*h*amount
     n_salt     = int(n_speckles*sp_ratio)
     n_pepper   = int(n_speckles*(1-sp_ratio))
 
@@ -30,12 +42,12 @@ def salt_pepper_noise(img, density=.3, sp_ratio=.5, seed=[1,2,3]):
     return res
 
 
-def gaussian_noise(img, bias=.0, scale=.1, input_scale=1, seed=[1,2,3]):
+def gaussian_noise(img, bias=.0, amount=.1, input_scale=1):
     h, w, c = img.shape
     d_max   = np.iinfo(img.dtype).max
 
-    gen     = np.random.default_rng(seed)
-    noise   = np.expand_dims(gen.normal(bias * d_max, scale * d_max, (h, w)), 2)
+    gen     = np.random.default_rng()
+    noise   = np.expand_dims(gen.normal(bias * d_max, amount * d_max, (h, w)), 2)
 
     res = input_scale * img.astype(np.int64) + noise.astype(np.int64)
 
