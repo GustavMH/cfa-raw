@@ -96,7 +96,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ds_path     = Path(args.input)
-    ds_cats     = [entry for entry in os.scandir(ds_path) if entry.is_dir()]
+    ds_cats     = [entry.name for entry in os.scandir(ds_path) if entry.is_dir()]
     ds_img_size = args.size
     res_dir     = Path(args.output)
     noise_amts  = [int(n) / 100 for n in args.noise]
@@ -112,5 +112,5 @@ if __name__ == "__main__":
     os.makedirs(res_dir, exist_ok=True)
 
     # Process
-    p_add_noise_to_ds(ds_path, res_dir, ds_cats, noises, noise_amts, size)
-    no_noise_to_ds(ds_path, res_dir, ds_cats, size)
+    #p_add_noise_to_ds(ds_path, res_dir, ds_cats, noises, noise_amts, size)
+    #no_noise_to_ds(ds_path, res_dir, ds_cats, size)
