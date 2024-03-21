@@ -36,7 +36,7 @@ def add_noise_to_ds_category(ds_path, res_dir, suffix, noise, noise_amt, size):
     os.makedirs(save_path_dng, exist_ok=True)
     os.makedirs(save_path_npy, exist_ok=True)
 
-    imgs = findAllFiles(ds_path / suffix)[:10]
+    imgs = findAllFiles(ds_path / suffix)
 
     for n, img in enumerate(imgs):
         img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
