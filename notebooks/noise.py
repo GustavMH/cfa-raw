@@ -12,7 +12,8 @@ def exp_speckle_noise(img, amount=.3):
     gen     = np.random.default_rng()
     noise   = np.expand_dims(gen.exponential(1/amount, (h, w)), 2)
 
-    res     = img.astype(np.int64) * noise.astype(np.int64)
+    # Mean corrected speckle noise?
+    res     = amount * img.astype(np.int64) * noise.astype(np.int64)
 
     return np.clip(res, 0, d_max).astype(img.dtype)
 
