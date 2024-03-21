@@ -2,13 +2,10 @@
 
 n_threads=$(eval nproc)
 
-ds_path=/home/gustav/Downloads/ds_proc
-
 cd $ds_path
 
 # copy folder structure
 (cd dng && find . -type d -exec mkdir -p -- ../ahd/{} \; ) && wait
-
 
 i=$((2 * n_threads))
 time (
