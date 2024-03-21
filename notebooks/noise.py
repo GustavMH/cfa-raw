@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 
-def mult_speckle_noise(img, amount=.3):
+def exp_speckle_noise(img, amount=.3):
     # for J = I + n*I many often use Gauss distributed n
     # rather than the real exponential distribution
     h, w, c = img.shape
@@ -13,6 +13,17 @@ def mult_speckle_noise(img, amount=.3):
     noise   = np.expand_dims(gen.exponential(1/amount, (h, w)), 2)
 
     res     = img.astype(np.int64) * noise.astype(np.int64)
+
+    return np.clip(res, 0, d_max).astype(img.dtype)
+
+def norm_speckle_noise(img, amount=.3):
+    h, w, c = img.shape
+    d_max   = np.iinfo(img.dtype).max
+
+    gen     = np.random.default_rng()
+    noise   = np.expand_dims(gen.normal(0, amount, (h, w)), 2)
+
+    res     = img.astype(np.int64) + (img.astype(np.int64) * noise.astype(np.int64))
 
     return np.clip(res, 0, d_max).astype(img.dtype)
 
