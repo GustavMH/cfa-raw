@@ -22,7 +22,7 @@ def findAllFiles(path):
     if folders:
         for f in folders:
             res.extend(findAllFiles(os.path.join(path, f)))
-            res.extend([os.path.join(path, f) for f in files if not f.endswith(".txt")])
+    res.extend([os.path.join(path, f) for f in files if not f.endswith(".txt")])
     return res
 
 
@@ -36,8 +36,7 @@ def add_noise_to_ds_category(ds_path, res_dir, suffix, noise, noise_amt, size):
     os.makedirs(save_path_dng, exist_ok=True)
     os.makedirs(save_path_npy, exist_ok=True)
 
-    imgs = findAllFiles(ds_path / suffix)
-
+    imgs = findAllFiles(ds_path / suffix)[:10]
 
     for n, img in enumerate(imgs):
         img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
@@ -60,19 +59,20 @@ def add_noise_to_ds_category(ds_path, res_dir, suffix, noise, noise_amt, size):
         dng.write(img_cfa, filename=str(save_path_dng / str(n)))
         np.save(save_path_npy / str(n), img_cfa)
 
-def no_noise_to_ds_category(ds_path, res_dir, suffix, size):
-    noise = (lambda x: x, "none")
-    add_noise_to_ds_category(ds_path, res_dir, suffix, noise, 0, size)
-
 def _f(args):
-    noise, noise_amt, suffix = args
-    add_noise_to_ds_category(ds_path, res_dir, suffix, noise, noise_amt, size)
+    add_noise_to_ds_category(*args)
+
+def identity(x, **kvargs):
+    return x
 
 def p_add_noise_to_ds(ds_path, res_dir, suffixes, noises, noise_amts, size):
-    args = list(product(noises, noise_amts, suffixes))
+    args_noise = [[ds_path, res_dir, *args, size]
+                  for args in product(suffixes, noises, noise_amts)]
+    args_clean = [[ds_path, res_dir, suffix, ("none", identity), 0, size]
+                  for suffix in suffixes]
 
     p = Pool(processes=cpu_count())
-    p.map(_f, args)
+    p.map(_f, args_noise + args_clean)
 
 
 noises = [
@@ -97,12 +97,11 @@ if __name__ == "__main__":
 
     ds_path     = Path(args.input)
     ds_cats     = [entry.name for entry in os.scandir(ds_path) if entry.is_dir()]
-    ds_img_size = args.size
+    ds_img_size = int(args.size)
     res_dir     = Path(args.output)
     noise_amts  = [int(n) / 100 for n in args.noise]
 
     print(
-        "test",
         ds_path,
         ds_cats,
         ds_img_size,
@@ -113,4 +112,3 @@ if __name__ == "__main__":
 
     # Process
     p_add_noise_to_ds(ds_path, res_dir, ds_cats, noises, noise_amts, ds_img_size)
-    no_noise_to_ds(ds_path, res_dir, ds_cats, ds_img_size)
