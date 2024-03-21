@@ -23,7 +23,7 @@ def norm_speckle_noise(img, amount=.3):
     gen     = np.random.default_rng()
     noise   = np.expand_dims(gen.normal(0, amount, (h, w)), 2)
 
-    res     = img.astype(np.int64) + (img.astype(np.int64) * noise.astype(np.int64))
+    res     = img.astype(np.int64) + (img.astype(np.int64) * noise)
 
     return np.clip(res, 0, d_max).astype(img.dtype)
 
