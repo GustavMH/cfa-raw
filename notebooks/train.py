@@ -170,14 +170,16 @@ if __name__ == "__main__":
 
     print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
-    train_clean = load_images(Path(args.clean) / "train", t=".png")[:100]
-    train_noise = load_images(Path(args.noise) / "train", t=args.type)[:100]
+    train_clean = load_images(Path(args.clean) / "train", t=".png")
+    train_noise = load_images(Path(args.noise) / "train", t=args.type)
 
-    val_clean = load_images(Path(args.clean) / "val", t=".png")[:100]
-    val_noise = load_images(Path(args.noise) / "val", t=args.type)[:100]
+    val_clean = load_images(Path(args.clean) / "val", t=".png")
+    val_noise = load_images(Path(args.noise) / "val", t=args.type)
 
     model = train(train_clean, train_noise, n_epochs=int(args.epochs))
     save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     losses = validate(model, val_clean, val_noise)
     save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
+
+    validate_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
