@@ -22,6 +22,7 @@ import torchvision.datasets   as datasets
 
 
 from denoisingautoencoder import DenoisingAutoencoder
+from cfa                  import colorize_cfa, rgb_kf
 
 def load_images(directory, t = ".png"):
     """
@@ -111,9 +112,11 @@ def save_model(model, model_dest):
 
 def save_losses(losses, loss_dest):
     with open(loss_dest, "w") as f:
-        f.writelines(losses)
+        f.writelines([f"{loss}\n" for loss in losses])
 
 def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     with torch.no_grad():
         outputs = model(inputs_noise[:3].to(device))
 
@@ -135,6 +138,8 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
 
 
 def validate(model, val_clean, val_noise):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     paired_dataset = PairedDataset(val_clean, val_noise)
     paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=False)
 
@@ -143,12 +148,13 @@ def validate(model, val_clean, val_noise):
 
     def loss(inputs_clean, inputs_noise):
         outputs = model(inputs_noise.to(device))
-        mse = F.MSELoss(outputs, inputs_clean)
+        mse = F.mse_loss(outputs, inputs_clean)
+        return mse
 
     with torch.no_grad():
         return [loss(*inputs) for inputs in paired_loader]
 
-if __name__ == "main":
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="Model trainer for CFA and RGB denoiser",
         description="Trains a denoising model"
@@ -160,6 +166,7 @@ if __name__ == "main":
     parser.add_argument("--type", required=True, help="Noise input file type")
 
     args = parser.parse_args()
+    print(args)
 
     clean_path = Path(args.clean)
     noise_path = Path(args.noise)
@@ -167,11 +174,11 @@ if __name__ == "main":
 
     run_name = args.name
 
-    train_clean = load_images(clean_path / "train", t=".png")[:100]
-    train_noise = load_images(noise_path / "train", t=args.type)[:100]
+    train_clean = load_images(clean_path / "train", t=".png")
+    train_noise = load_images(noise_path / "train", t=args.type)
 
-    val_clean = load_images(clean_path / "val", t=".png")[:100]
-    val_noise = load_images(noise_path / "val", t=args.type)[:100]
+    val_clean = load_images(clean_path / "val", t=".png")
+    val_noise = load_images(noise_path / "val", t=args.type)
 
     model = train(train_clean, train_noise, n_epochs=1)
     save_model(model, model_dest=save_path / f"{run_name}-model.pkl")
