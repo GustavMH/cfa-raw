@@ -156,7 +156,7 @@ def validate(model, val_clean, val_noise):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="Model trainer for CFA and RGB denoiser",
+        prog="train.py",
         description="Trains a denoising model"
     )
     parser.add_argument("--clean", required=True, help="Path to the clean data")
@@ -164,24 +164,20 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, help="Path to the output folder, model and loss are saved here")
     parser.add_argument("--name", required=True, help="Name prefix for the output files")
     parser.add_argument("--type", required=True, help="Noise input file type")
+    parser.add_argument("--epochs", required=True)
 
     args = parser.parse_args()
-    print(args)
 
-    clean_path = Path(args.clean)
-    noise_path = Path(args.noise)
-    save_path  = Path(args.output)
+    print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
-    run_name = args.name
+    train_clean = load_images(Path(args.clean) / "train", t=".png")[:100]
+    train_noise = load_images(Path(args.noise) / "train", t=args.type)[:100]
 
-    train_clean = load_images(clean_path / "train", t=".png")
-    train_noise = load_images(noise_path / "train", t=args.type)
+    val_clean = load_images(Path(args.clean) / "val", t=".png")[:100]
+    val_noise = load_images(Path(args.noise) / "val", t=args.type)[:100]
 
-    val_clean = load_images(clean_path / "val", t=".png")
-    val_noise = load_images(noise_path / "val", t=args.type)
-
-    model = train(train_clean, train_noise, n_epochs=1)
-    save_model(model, model_dest=save_path / f"{run_name}-model.pkl")
+    model = train(train_clean, train_noise, n_epochs=int(args.epochs))
+    save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     losses = validate(model, val_clean, val_noise)
-    save_losses(losses, loss_dest=save_path / f"{run_name}-val-loss.txt")
+    save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
