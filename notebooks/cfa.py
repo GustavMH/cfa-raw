@@ -35,7 +35,7 @@ def colorize_cfa(img: np.ndarray, kernel: np.ndarray):
     h, w       = img.shape
     kc, kw, kh = kernel.shape
 
-    res = np.zeros((h, w, kc))
+    res = np.zeros((h, w, kc), dtype=img.dtype)
 
     for channel in range(kc):
         for off_w, r in enumerate(kernel[channel]):
