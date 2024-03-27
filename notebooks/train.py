@@ -17,10 +17,6 @@ import torch.nn.functional as F
 from   torch import nn, optim
 from   torch.utils.data import DataLoader, TensorDataset, Dataset, random_split
 
-import torchvision.transforms as transforms
-import torchvision.datasets   as datasets
-
-
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
@@ -36,18 +32,16 @@ def load_images(directory, t = ".png"):
     - data (torch.Tensor): A torch stack with the data
     """
     images = []
-    transform = transforms.ToTensor()
     for root, dirs, files in os.walk(directory):
         # os.walk returns files in arbitrary order
         for file in sorted(files):
             if file.endswith(t):
                 image_path = os.path.join(root, file)
-                image = (
-                    Image.open(image_path).convert('RGB')
+                image_tensor = (
+                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float32))
                     if t == ".tiff" or t == ".png"
-                    else colorize_cfa(np.load(image_path), rgb_kf).astype(np.float32)
+                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float32))
                 )
-                image_tensor = transform(image)
 
                 if image_tensor.max() > 1:
                     image_tensor /= 256.0
