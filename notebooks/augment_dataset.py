@@ -22,7 +22,7 @@ def findAllFiles(path):
     if folders:
         for f in folders:
             res.extend(findAllFiles(os.path.join(path, f)))
-    res.extend([os.path.join(path, f) for f in files if not f.endswith(".txt")])
+    res.extend([os.path.join(path, f) for f in files if f.endswith(".JPEG")])
     return res
 
 

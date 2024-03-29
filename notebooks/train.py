@@ -38,9 +38,9 @@ def load_images(directory, t = ".png"):
             if file.endswith(t):
                 image_path = os.path.join(root, file)
                 image_tensor = (
-                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float32))
+                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float32)).permute(2,0,1)
                     if t == ".tiff" or t == ".png"
-                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float32))
+                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float32)).permute(2,0,1)
                 )
 
                 if image_tensor.max() > 1:
