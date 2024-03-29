@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+#SBATCH --ntasks=1 --cpus-per-task=12 --time=10:00:00 --mem=6000M
+
+export ds_path=/home/zvq211/ds_160
+export PATH=/home/zvq211/cfa-raw/dcraw:$PATH
 
 n_threads=$(eval nproc)
 
