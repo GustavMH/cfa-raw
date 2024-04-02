@@ -142,7 +142,7 @@ def validate(model, val_clean, val_noise):
 
     def loss(inputs_clean, inputs_noise):
         outputs = model(inputs_noise.to(device))
-        mse = F.mse_loss(outputs, inputs_clean)
+        mse = F.mse_loss(outputs, inputs_clean.to(device))
         return mse
 
     with torch.no_grad():
@@ -158,22 +158,30 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, help="Path to the output folder, model and loss are saved here")
     parser.add_argument("--name", required=True, help="Name prefix for the output files")
     parser.add_argument("--type", required=True, help="Noise input file type")
-    parser.add_argument("--epochs", required=True)
+    parser.add_argument("--epochs")
+    parser.add_argument("--model")
 
     args = parser.parse_args()
 
     print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
 
-    train_clean = load_images(Path(args.clean) / "train", t=".png")
-    train_noise = load_images(Path(args.noise) / "train", t=args.type)
+    if not (args.epochs or args.model):
+        print("Nothing to do!")
 
-    val_clean = load_images(Path(args.clean) / "val", t=".png")
-    val_noise = load_images(Path(args.noise) / "val", t=args.type)
+    if args.epochs:
+        train_clean = load_images(Path(args.clean) / "train", t=".png")
+        train_noise = load_images(Path(args.noise) / "train", t=args.type)
 
-    model = train(train_clean, train_noise, n_epochs=int(args.epochs))
-    save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
+        model = train(train_clean, train_noise, n_epochs=int(args.epochs))
+        save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
-    losses = validate(model, val_clean, val_noise)
-    save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
+    if args.model:
+        model = pickle.load(open(Path(args.model)))
 
-    validate_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
+        val_clean = load_images(Path(args.clean) / "val", t=".png")
+        val_noise = load_images(Path(args.noise) / "val", t=args.type)
+
+        losses = validate(model, val_clean, val_noise)
+        save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
+
+        validate_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
