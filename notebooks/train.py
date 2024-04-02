@@ -112,7 +112,7 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     with torch.no_grad():
-        outputs = model(inputs_noise[:3].to(device))
+        outputs = model(inputs_noise[:3].to(device)).cpu()
 
         fig, axs = plt.subplots(3, 3, figsize=(15, 6))
         for i in range(3):
@@ -164,6 +164,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+    print(args)
 
     if not (args.epochs or args.model):
         print("Nothing to do!")
@@ -176,7 +177,7 @@ if __name__ == "__main__":
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
-        model = pickle.load(open(Path(args.model)))
+        #model = pickle.load(open(Path(args.model), "rb"))
 
         val_clean = load_images(Path(args.clean) / "val", t=".png")
         val_noise = load_images(Path(args.noise) / "val", t=args.type)
@@ -184,4 +185,4 @@ if __name__ == "__main__":
         losses = validate(model, val_clean, val_noise)
         save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
 
-        validate_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
+        validation_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
