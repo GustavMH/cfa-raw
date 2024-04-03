@@ -177,7 +177,7 @@ if __name__ == "__main__":
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
-        #model = pickle.load(open(Path(args.model), "rb"))
+        model = pickle.load(open(Path(args.model), "rb"))
 
         val_clean = load_images(Path(args.clean) / "val", t=".png")
         val_noise = load_images(Path(args.noise) / "val", t=args.type)
