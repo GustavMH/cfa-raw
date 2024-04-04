@@ -135,7 +135,7 @@ def validate(model, val_clean, val_noise):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     paired_dataset = PairedDataset(val_clean, val_noise)
-    paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=False)
+    paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
 
     model.eval()
     model.to(device)
