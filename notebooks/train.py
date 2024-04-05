@@ -138,7 +138,7 @@ def validate(model, val_clean, val_noise, draws=200):
     # this way the samples are independant, otherwise each draw changes the
     # distribution the next sample is drawn from.
     paired_dataset = PairedDataset(val_clean, val_noise)
-    rand_sampler   = RandomSampler(paired_dataset, replacement=True, num_samples=draw)
+    rand_sampler   = RandomSampler(paired_dataset, replacement=True, num_samples=draws)
 
     model.eval()
     model.to(device)
