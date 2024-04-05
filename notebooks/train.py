@@ -15,7 +15,7 @@ from   PIL import Image
 import torch
 import torch.nn.functional as F
 from   torch import nn, optim
-from   torch.utils.data import DataLoader, TensorDataset, Dataset, random_split
+from   torch.utils.data import DataLoader, TensorDataset, Dataset, random_split, RandomSampler
 
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
@@ -134,8 +134,11 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
 def validate(model, val_clean, val_noise):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    # Sample with replacement, you might draw the same sample multiple times,
+    # this way the samples are independant, otherwise each draw changes the
+    # distribution the next sample is drawn from.
     paired_dataset = PairedDataset(val_clean, val_noise)
-    paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
+    paired_loader  = RandomSampler(paired_dataset, replacement=True, num_samples=200)
 
     model.eval()
     model.to(device)
