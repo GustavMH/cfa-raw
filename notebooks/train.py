@@ -149,7 +149,7 @@ def validate(model, val_clean, val_noise, draws=200):
         return mse
 
     with torch.no_grad():
-        return [loss(*paired_dataset[i]) for i in rand_sampler]
+        return [loss(*paired_dataset[i:i+1]) for i in rand_sampler]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
