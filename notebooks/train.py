@@ -146,7 +146,7 @@ def validate(model, val_clean, val_noise, draws=200):
     def loss(inputs_clean, inputs_noise):
         outputs = model(inputs_noise.to(device))
         mse = F.mse_loss(outputs, inputs_clean.to(device))
-        return mse
+        return mse.cpu()
 
     with torch.no_grad():
         # Take mean of samples to get normally distributed data
