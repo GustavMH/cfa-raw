@@ -149,7 +149,10 @@ def validate(model, val_clean, val_noise, draws=200):
         return mse
 
     with torch.no_grad():
-        return [loss(*paired_dataset[i:i+1]) for i in rand_sampler]
+        # Take mean of samples to get normally distributed data
+        losses = np.array([loss(*paired_dataset[i:i+1]) for i in rand_sampler])
+        lossavg = np.array(np.split(losses, 4, axis=0)).mean(axis=0)
+        return lossavg
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
