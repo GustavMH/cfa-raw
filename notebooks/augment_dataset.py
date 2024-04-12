@@ -99,7 +99,7 @@ if __name__ == "__main__":
     ds_cats     = [entry.name for entry in os.scandir(ds_path) if entry.is_dir()]
     ds_img_size = int(args.size)
     res_dir     = Path(args.output)
-    noise_amts  = [int(n) / 100 for n in args.noise]
+    noise_amts  = [float(n) / 100 for n in args.noise]
 
     print(
         ds_path,
