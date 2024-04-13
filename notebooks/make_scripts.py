@@ -21,7 +21,6 @@ def write_script(form, ext, noise_type, intensity, n):
         f.write(f"--output /home/zvq211/models ")
         f.write(f"--name {form}{noise_type}{intensity}_{n} ")
         f.write(f"--type .{ext} ")
-        f.write(f"--type .{ext} ")
         f.write(f"--epochs 100\n")
 
 for (form, ext), noise_type, intensity in product(forms, noise_types, intensities):
