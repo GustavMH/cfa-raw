@@ -1,6 +1,6 @@
 from itertools import product
 
-forms = [("cfa","npy"), ("ahd","png"), ("unproc","png")]
+forms = [("npy","npy"), ("ahd","tiff"), ("png","png")]
 noise_types = ["gaussian", "speckle", "saltpepper"]
 intensities = [
     "0.00195312pct", "0.0078125pct", "0.03125pct",
@@ -19,6 +19,7 @@ def write_script(form, ext, noise_type, intensity, n):
         f.write(f"--clean /home/zvq211/ds_proc/png/none/0pct/ ")
         f.write(f"--noise /home/zvq211/ds_proc/{form}/{noise_type}/{intensity}pct/ ")
         f.write(f"--output /home/zvq211/models ")
+        f.write(f"--model /home/zvq211/models/{form}{noise_type}{intensity}_{n}-model.pkl")
         f.write(f"--name {form}{noise_type}{intensity}_{n} ")
         f.write(f"--type .{ext} ")
         f.write(f"--epochs 100\n")
