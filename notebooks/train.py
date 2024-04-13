@@ -131,14 +131,10 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
             plt.show()
 
 
-def validate(model, val_clean, val_noise, draws=200):
+def validate(model, val_clean, val_noise):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Sample with replacement, you might draw the same sample multiple times,
-    # this way the samples are independant, otherwise each draw changes the
-    # distribution the next sample is drawn from.
     paired_dataset = PairedDataset(val_clean, val_noise)
-    rand_sampler   = RandomSampler(paired_dataset, replacement=True, num_samples=draws)
 
     model.eval()
     model.to(device)
@@ -149,10 +145,8 @@ def validate(model, val_clean, val_noise, draws=200):
         return mse.cpu()
 
     with torch.no_grad():
-        # Take mean of samples to get normally distributed data
-        losses = np.array([loss(*paired_dataset[i:i+1]) for i in rand_sampler])
-        lossavg = np.array(np.split(losses, 4, axis=0)).mean(axis=0)
-        return lossavg
+        return [loss(*val) for val in paired_dataset]
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
