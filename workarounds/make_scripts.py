@@ -5,9 +5,9 @@ from pathlib   import Path
 forms = [("npy","npy"), ("ahd","tiff"), ("png","png")]
 noise_types = ["gaussian", "speckle", "saltpepper"]
 intensities = [
-    '64pct', '32.0pct', '16.0pct', '8.0pct',
-    '4.0pct', '2.0pct', '1.0pct', '0.5pct',
-    '0.25pct', '0.125pct', '0.0625pct'
+    '64', '32.0', '16.0', '8.0',
+    '4.0', '2.0', '1.0', '0.5',
+    '0.25', '0.125', '0.0625'
 ]
 home       = Path("/home/zvq211")
 ds_path    = home / "ds_160_log"
