@@ -23,7 +23,7 @@ def write_script(form, ext, noise_type, intensity, n):
         ["#SBATCH --ntasks=1 --gres=gpu:titanrtx --cpus-per-task=8 --mem=8000M --time=10:00:00"],
         [f"source {home / 'cfa-raw'}/.venv/bin/activate"],
         [
-            f"python3.11 {prog_path}"
+            f"python3.11 {prog_path}",
             f"--clean {ds_path}/png/none/0pct/",
             f"--noise {ds_path}/{form}/{noise_type}/{intensity}pct/",
             f"--output {model_path}",
