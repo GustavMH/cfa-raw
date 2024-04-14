@@ -20,7 +20,7 @@ def write_script(form, ext, noise_type, intensity, n):
     filename = f"{name}.sh"
     commands = [
         ["#!/usr/bin/env bash"],
-        ["#SBATCH --ntasks=1 --gres=gpu:titanrtx --cpus-per-task=8 --mem=8000M --time=10:00:00"],
+        ["#SBATCH --ntasks=1 --gres=gpu:titanrtx --cpus-per-task=8 --mem=18000M --time=10:00:00"],
         [f"source {home / 'cfa-raw'}/.venv/bin/activate"],
         [
             f"python3.11 {prog_path}",
