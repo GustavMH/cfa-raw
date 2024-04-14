@@ -83,9 +83,11 @@ def train(train_clean, train_noise, n_epochs=50):
 
             optimizer.zero_grad()
 
+            #with torch.autocast(device_type=device, dtype=torch.float16):
             # Forward pass
             outputs = model(noisy_images)
             loss = criterion(outputs, clean_images)
+
             loss.backward()
             optimizer.step()
 
