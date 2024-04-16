@@ -38,9 +38,9 @@ def load_images(directory, t = ".png"):
             if file.endswith(t):
                 image_path = os.path.join(root, file)
                 image_tensor = (
-                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float32)).permute(2,0,1)
+                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16)).permute(2,0,1)
                     if t == ".tiff" or t == ".png"
-                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float32)).permute(2,0,1)
+                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float16)).permute(2,0,1)
                 )
 
                 if image_tensor.max() > 1:
@@ -74,6 +74,8 @@ def train(train_clean, train_noise, n_epochs=50):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
+    scaler = GradScaler()
+
     for epoch in range(n_epochs):
         model.train()
         running_loss = 0.0
@@ -83,13 +85,15 @@ def train(train_clean, train_noise, n_epochs=50):
 
             optimizer.zero_grad()
 
-            #with torch.autocast(device_type=device, dtype=torch.float16):
-            # Forward pass
-            outputs = model(noisy_images)
-            loss = criterion(outputs, clean_images)
+            with torch.autocast(device_type=device, dtype=torch.float16):
+                # Forward pass
+                outputs = model(noisy_images)
+                loss = criterion(outputs, clean_images)
 
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+
+            scaler.update()
 
             running_loss += loss.item()
 
