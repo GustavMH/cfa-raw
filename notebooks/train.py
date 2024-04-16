@@ -14,8 +14,9 @@ from   PIL import Image
 
 import torch
 import torch.nn.functional as F
-from   torch import nn, optim
+from   torch            import nn, optim
 from   torch.utils.data import DataLoader, TensorDataset, Dataset, random_split, RandomSampler
+from   torch.cuda.amp   import GradScaler
 
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
