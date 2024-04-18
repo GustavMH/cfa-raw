@@ -99,11 +99,11 @@ def train(train_clean, train_noise, n_epochs=50):
             running_loss += loss.item()
 
         epoch_loss = running_loss / len(paired_loader)
-        print(f'Epoch {epoch+1}/{n_epochs}, Loss: {epoch_loss}')
+        print(f'Epoch {epoch+1}/{n_epochs}, Loss: {epoch_loss}', flush=True)
 
     for param in model.parameters():
         if torch.isnan(param).any() or torch.isinf(param).any():
-            print("Model contains NaN or inf values")
+            print("Model contains NaN or inf values", flush=True)
 
     return model
 
@@ -170,11 +170,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
-    print(args)
+    print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"), flush=True)
+    print(args, flush=True)
 
     if not (args.epochs or args.model):
-        print("Nothing to do!")
+        print("Nothing to do!", flush=True)
 
     if args.epochs:
         train_clean = load_images(Path(args.clean) / "train", t=".png")
