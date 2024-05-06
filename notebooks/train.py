@@ -65,15 +65,15 @@ class PairedDataset(Dataset):
 
         return clean_image, noisy_image
 
-def train(train_clean, train_noise, n_epochs=50):
+def train(train_clean, train_noise, n_epochs=50, loss=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     paired_dataset = PairedDataset(train_clean, train_noise)
     paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
 
     model = DenoisingAutoencoder().to(device)
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    criterion = loss
+    optimizer = optim.AdamW(model.parameters(), lr=1e-4)
 
     scaler = GradScaler()
 
@@ -167,6 +167,7 @@ if __name__ == "__main__":
     parser.add_argument("--type", required=True, help="Noise input file type")
     parser.add_argument("--epochs")
     parser.add_argument("--model")
+    parser.add_argument("--loss", help="Loss function to use during training", default="L2", choices=["L1", "L1smooth", "L2"])
 
     args = parser.parse_args()
 
@@ -180,7 +181,13 @@ if __name__ == "__main__":
         train_clean = load_images(Path(args.clean) / "train", t=".png")
         train_noise = load_images(Path(args.noise) / "train", t=args.type)
 
-        model = train(train_clean, train_noise, n_epochs=int(args.epochs))
+        loss = {
+            "L2": nn.MSELoss(),
+            "L1": nn.L1loss(),
+            "L1smooth": nn.smoothL1()
+        }[args.loss]
+
+        model = train(train_clean, train_noise, n_epochs=int(args.epochs), loss=loss)
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
