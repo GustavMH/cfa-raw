@@ -9,7 +9,7 @@ prog_path  = home / "cfa-raw" / "notebooks" / "train.py"
 
 
 def write_script(form, ext, path, n):
-    name     = f"noise0_{form}_{n}"
+    name     = f"noise0_{path[:2]}_{n}"
     filename = f"{name}.sh"
     commands = [
         ["#!/usr/bin/env bash"],
