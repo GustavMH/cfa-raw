@@ -183,8 +183,8 @@ if __name__ == "__main__":
 
         loss = {
             "L2": nn.MSELoss(),
-            "L1": nn.L1loss(),
-            "L1smooth": nn.smoothL1()
+            "L1": nn.L1Loss(),
+            "L1smooth": nn.smoothL1Loss()
         }[args.loss]
 
         model = train(train_clean, train_noise, n_epochs=int(args.epochs), loss=loss)
