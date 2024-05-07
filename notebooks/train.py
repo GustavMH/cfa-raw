@@ -9,8 +9,8 @@ from pathlib import Path
 
 import numpy             as np
 import matplotlib.pyplot as plt
-from   PIL import Image
-
+from   PIL    import Image
+from   random import randint
 
 import torch
 import torch.nn.functional as F
@@ -50,8 +50,15 @@ def load_images(directory, t = ".png"):
                 images.append(image_tensor)
     return torch.stack(images)
 
+def cfaAugment(img, rot):
+    x, y = [(0,0), (0,1), (1,0), (1,1)][rot]
+    c, w, h = img.shape
+
+    return img[:, x:w+x-2, y:h+y-2]
+
 class PairedDataset(Dataset):
-    def __init__(self, data_clean, data_noisy):
+    def __init__(self, data_clean, data_noisy, cfa_aug=False):
+        self.cfa_aug = cfa_aug
         self.data_clean = data_clean
         self.data_noisy = data_noisy
 
@@ -63,12 +70,17 @@ class PairedDataset(Dataset):
         clean_image = self.data_clean[idx]
         noisy_image = self.data_noisy[idx]
 
+        if self.cfa_aug:
+            r = randint(0,3)
+
+            clean_image = cfaAugment(clean_image, r)
+            noisy_image = cfaAugment(noisy_image, r)
+
         return clean_image, noisy_image
 
-def train(train_clean, train_noise, n_epochs=50, loss=None):
+def train(paired_dataset, n_epochs=50, loss=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    paired_dataset = PairedDataset(train_clean, train_noise)
     paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
 
     model = DenoisingAutoencoder().to(device)
@@ -168,6 +180,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs")
     parser.add_argument("--model")
     parser.add_argument("--loss", help="Loss function to use during training", default="L2", choices=["L1", "L1smooth", "L2"])
+    parser.add_argument("--cfa-augment", action="store_true")
 
     args = parser.parse_args()
 
@@ -187,7 +200,8 @@ if __name__ == "__main__":
             "L1smooth": nn.SmoothL1Loss()
         }[args.loss]
 
-        model = train(train_clean, train_noise, n_epochs=int(args.epochs), loss=loss)
+        paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment)
+        model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
