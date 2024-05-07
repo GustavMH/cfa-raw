@@ -54,7 +54,8 @@ def cfaAugment(img, rot):
     x, y = [(0,0), (0,1), (1,0), (1,1)][rot]
     c, w, h = img.shape
 
-    return img[:, x:w+x-2, y:h+y-2]
+    # The denoiser has to be aligned to 32x32 px chunks
+    return img[:, x:w+x-32, y:h+y-32]
 
 class PairedDataset(Dataset):
     def __init__(self, data_clean, data_noisy, cfa_aug=False):
@@ -84,6 +85,7 @@ def train(paired_dataset, n_epochs=50, loss=None):
     paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
 
     model = DenoisingAutoencoder().to(device)
+
     criterion = loss
     optimizer = optim.AdamW(model.parameters(), lr=1e-4)
 
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment)
         model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
-        save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
+        #save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
         model = pickle.load(open(Path(args.model), "rb"))
