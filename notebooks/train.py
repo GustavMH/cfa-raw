@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment)
         model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
-        #save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
+        save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
         model = pickle.load(open(Path(args.model), "rb"))
