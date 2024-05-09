@@ -22,7 +22,7 @@ from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
 def expand_cfa(tensor, dims=3):
-    return torch.stack([torch.Tensor(tensor)] * dims)
+    return torch.stack([torch.Tensor(tensor)] + [torch.zeros(*tensor.shape)] * (dims - 1))
 
 def load_images(directory, t = ".png", expand_cfa_p = False):
     """
@@ -46,7 +46,7 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
                     if t == ".tiff" or t == ".png"
                     else (
                             torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float16)).permute(2,0,1)
-                            if not expand_cfa
+                            if not expand_cfa_p
                             else
                             torch.Tensor(expand_cfa(np.load(image_path).astype(np.float16)))
                     )
