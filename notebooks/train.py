@@ -22,7 +22,7 @@ from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
 def expand_cfa(tensor, dims=3):
-    return torch.stack([tensor] * dims)
+    return torch.stack([torch.Tensor(tensor)] * dims)
 
 def load_images(directory, t = ".png", expand_cfa_p = False):
     """
