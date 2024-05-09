@@ -22,7 +22,7 @@ from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
 def expand_cfa(tensor, dims=3):
-    return torch.stack([torch.Tensor(tensor)] + [torch.zeros(*tensor.shape)] * (dims - 1))
+    return torch.stack([torch.Tensor(tensor)] * dims)
 
 def load_images(directory, t = ".png", expand_cfa_p = False):
     """
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         model = pickle.load(open(Path(args.model), "rb"))
 
         val_clean = load_images(Path(args.clean) / "val", t=".png")
-        val_noise = load_images(Path(args.noise) / "val", t=args.type)
+        val_noise = load_images(Path(args.noise) / "val", t=args.type, expand_cfa_p=args.cfa_expand)
 
         losses = validate(model, val_clean, val_noise)
         save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
