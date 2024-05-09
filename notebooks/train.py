@@ -21,7 +21,10 @@ from   torch.cuda.amp   import GradScaler
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
-def load_images(directory, t = ".png"):
+def expand_cfa(tensor, dims=3):
+    return torch.stack([tensor] * dims)
+
+def load_images(directory, t = ".png", expand_cfa_p = False):
     """
     Load images from dir
 
@@ -41,7 +44,12 @@ def load_images(directory, t = ".png"):
                 image_tensor = (
                     torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16)).permute(2,0,1)
                     if t == ".tiff" or t == ".png"
-                    else torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float16)).permute(2,0,1)
+                    else (
+                            torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float16)).permute(2,0,1)
+                            if not expand_cfa
+                            else
+                            torch.Tensor(expand_cfa(np.load(image_path).astype(np.float16)))
+                    )
                 )
 
                 if image_tensor.max() > 1:
@@ -183,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--model")
     parser.add_argument("--loss", help="Loss function to use during training", default="L2", choices=["L1", "L1smooth", "L2"])
     parser.add_argument("--cfa-augment", action="store_true")
+    parser.add_argument("--cfa-expand", action="store_true")
 
     args = parser.parse_args()
 
@@ -194,7 +203,7 @@ if __name__ == "__main__":
 
     if args.epochs:
         train_clean = load_images(Path(args.clean) / "train", t=".png")
-        train_noise = load_images(Path(args.noise) / "train", t=args.type)
+        train_noise = load_images(Path(args.noise) / "train", t=args.type, expand_cfa_p=args.cfa_expand)
 
         loss = {
             "L2": nn.MSELoss(),
