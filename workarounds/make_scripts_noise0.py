@@ -32,4 +32,4 @@ def write_script(form, ext, path, n):
 for path in ["m", "mw", "w", "d"]:
     for i in range(4):
         for n in range(5):
-            write_script(form, ext, f"{path}{i}", n)
+            write_script("ahd", "tiff", f"{path}{i}", n)
