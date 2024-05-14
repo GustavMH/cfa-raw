@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 from pathlib   import Path
 
-forms = [("npy","npy","npy/none/0pct"), ("ahd","tiff","d0"),("ahd","tiff","d1"),("ahd","tiff","d2"),("ahd","tiff","d3"), ("png","png","png/none/0pct")]
+forms = [#("npy","npy","npy/none/0pct"),
+         ("ahd","tiff","d0"),
+         ("ahd","tiff","d1"),
+         ("ahd","tiff","d2"),
+         ("ahd","tiff","d3")]
+         #("png","png","png/none/0pct")]
 home       = Path("/home/zvq211")
 ds_path    = home / "ds_160_log"
 model_path = home / "models"
@@ -23,7 +28,7 @@ def write_script(form, ext, path, n):
             f"--model {model_path}/{name}-model.pkl",
             f"--name {name}",
             f"--type .{ext}",
-            f"--epochs 100"
+            f"--epochs 300"
         ]
     ]
 

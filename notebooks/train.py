@@ -198,6 +198,10 @@ if __name__ == "__main__":
     print("DEVICE:", torch.device("cuda:0" if torch.cuda.is_available() else "cpu"), flush=True)
     print(args, flush=True)
 
+    if not torch.cuda.is_available():
+        print("No cuda device")
+        exit(1)
+
     if not (args.epochs or args.model):
         print("Nothing to do!", flush=True)
 
