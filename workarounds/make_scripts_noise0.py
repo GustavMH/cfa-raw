@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 from pathlib   import Path
 
-forms = [#("npy","npy","npy/none/0pct"),
-         ("ahd","tiff","d0"),
-         ("ahd","tiff","d1"),
-         ("ahd","tiff","d2"),
-         ("ahd","tiff","d3")]
-         #("png","png","png/none/0pct")]
 home       = Path("/home/zvq211")
 ds_path    = home / "ds_160_log"
 model_path = home / "models"
@@ -14,7 +8,7 @@ prog_path  = home / "cfa-raw" / "notebooks" / "train.py"
 
 
 def write_script(form, ext, path, n):
-    name     = f"noise0_{path[:2]}_{n}"
+    name     = f"noise0_{path}_{n}"
     filename = f"{name}.sh"
     commands = [
         ["#!/usr/bin/env bash"],
@@ -35,6 +29,7 @@ def write_script(form, ext, path, n):
     with open(filename, "w") as f:
         f.write("\n".join([" ".join(args) for args in commands]))
 
-for form, ext, path in forms:
-    for n in range(5):
-        write_script(form, ext, path, n)
+for path in ["m", "mw", "w", "d"]:
+    for i in range(4):
+        for n in range(5):
+            write_script(form, ext, f"{path}{i}", n)
