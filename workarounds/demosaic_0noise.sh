@@ -9,6 +9,7 @@ n_threads=$(eval nproc)
 cd $ds_path
 
 for j in "mw,-m 3" "m,-m 3 -W", "w, ", "d, -W"; do
+   IFS=","
    set -- $j
    for quality in 0 1 2 3; do
       (cd dng/none/0pct && find . -type d -exec mkdir -p -- ../../../$1$quality/{} \; ) && wait
@@ -17,12 +18,13 @@ done
 
 # copy folder structure
 for j in "mw,-m 3" "m,-m 3 -W", "w, ", "d, -W"; do
+   IFS=","
    set -- $j
    for quality in 0 1 2 3; do
       i=$((2 * n_threads))
       for path in $(cd dng/none/0pct && find -type f | sed "s/\.\///;s/\.dng//"); do
          ((i=i%$((2*n_threads)))); ((i++==0)) && wait
-         (dcraw -q $quality -T -g 1 1  dng/none/0pct/$path.dng) && mv dng/none/0pct/$path.tiff $d$quality/$path.tiff &
+         (dcraw -q $quality -T -g 1 1 $2 dng/none/0pct/$path.dng) && mv dng/none/0pct/$path.tiff $1$quality/$path.tiff &
       done
       wait
    done
