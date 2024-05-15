@@ -19,7 +19,7 @@ def findAllFiles(path):
     if folders:
         for f in folders:
             res.extend(findAllFiles(os.path.join(path, f)))
-    res.extend([os.path.join(path, f) for f in files if f.endswith(".JPEG")])
+    res.extend([os.path.join(path, f) for f in files if f.endswith(".JPEG") or f.endswith(".jpg")])
     return res
 
 
@@ -31,7 +31,7 @@ def convert_ds_category(ds_path, res_dir, suffix):
     os.makedirs(save_path_dng, exist_ok=True)
     os.makedirs(save_path_npy, exist_ok=True)
 
-    imgs = findAllFiles(ds_path / suffix)[:100]
+    imgs = findAllFiles(ds_path / suffix)
 
     for n, img in enumerate(imgs):
         img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
