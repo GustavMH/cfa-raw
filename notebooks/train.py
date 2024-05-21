@@ -64,7 +64,7 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
              return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 
     first  = process_fn(paths[0])
-    res    = torch.zeros([len(paths), *first.shape], dtype=torch.float32)
+    res    = torch.zeros([len(paths), *first.shape], dtype=torch.uint8)
     res[0] = first
 
     for i, path in enumerate(paths[1:]):
@@ -99,7 +99,7 @@ class PairedDataset(Dataset):
             clean_image = cfaAugment(clean_image, r)
             noisy_image = cfaAugment(noisy_image, r)
 
-        return clean_image, noisy_image
+        return clean_image.to(torch.float32), noisy_image.to(torch.float32)
 
 def train(paired_dataset, n_epochs=50, loss=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
