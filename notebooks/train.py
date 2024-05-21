@@ -21,6 +21,18 @@ from   torch.cuda.amp   import GradScaler
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
+import gc
+
+# Memory benchmark
+import tracemalloc
+import resource
+import sys
+def using(point=""):
+    usage=resource.getrusage(resource.RUSAGE_SELF)
+    print( '''%s: usertime=%s systime=%s mem=%s mb
+           '''%(point,usage[0],usage[1],
+                usage[2]/1024.0 ))
+
 def expand_cfa(tensor, dims=3):
     return torch.stack([torch.Tensor(tensor)] * dims)
 
@@ -35,28 +47,30 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
     Returns:
     - data (torch.Tensor): A torch stack with the data
     """
-    images = []
+    paths = []
     for root, dirs, files in os.walk(directory):
         # os.walk returns files in arbitrary order
         for file in sorted(files):
             if file.endswith(t):
-                image_path = os.path.join(root, file)
-                image_tensor = (
-                    torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16)).permute(2,0,1)
-                    if t == ".tiff" or t == ".png"
-                    else (
-                            torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.float16)).permute(2,0,1)
-                            if not expand_cfa_p
-                            else
-                            torch.Tensor(expand_cfa(np.load(image_path).astype(np.float16)))
-                    )
-                )
+                paths.append(os.path.join(root, file))
 
-                if image_tensor.max() > 1:
-                    image_tensor /= 256.0
+    def process_fn(image_path):
+        if t == ".npy":
+            if expand_cfa_p:
+                return torch.Tensor(expand_cfa(np.load(image_path).astype(np.uint8)))
+            else:
+                return torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.uint8)).permute(2,0,1)
+        else:
+             return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 
-                images.append(image_tensor)
-    return torch.stack(images)
+    first  = process_fn(paths[0])
+    res    = torch.zeros([len(paths), *first.shape], dtype=torch.float32)
+    res[0] = first
+
+    for i, path in enumerate(paths[1:]):
+        res[i] = process_fn(path)
+
+    return res
 
 def cfaAugment(img, rot):
     x, y = [(0,0), (0,1), (1,0), (1,1)][rot]
@@ -200,14 +214,18 @@ if __name__ == "__main__":
 
     if not torch.cuda.is_available():
         print("No cuda device")
-        exit(1)
+        #exit(1)
 
     if not (args.epochs or args.model):
         print("Nothing to do!", flush=True)
 
     if args.epochs:
+        using("Start")
         train_clean = load_images(Path(args.clean) / "train", t=".png")
+        using("Clean data loaded")
         train_noise = load_images(Path(args.noise) / "train", t=args.type, expand_cfa_p=args.cfa_expand)
+        using("Noisy data loaded")
+        print((train_noise.numel() * train_noise.element_size()) / 10**6, "MB", train_noise.shape, train_noise.dtype)
 
         loss = {
             "L2": nn.MSELoss(),
@@ -216,6 +234,7 @@ if __name__ == "__main__":
         }[args.loss]
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment)
+        using("Dataset created")
         model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
