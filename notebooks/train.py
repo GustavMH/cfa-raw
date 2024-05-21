@@ -31,7 +31,7 @@ def using(point=""):
     usage=resource.getrusage(resource.RUSAGE_SELF)
     print( '''%s: usertime=%s systime=%s mem=%s mb
            '''%(point,usage[0],usage[1],
-                usage[2]/1024.0 ))
+                usage[2]/1024.0 ), flush=True)
 
 def expand_cfa(tensor, dims=3):
     return torch.stack([torch.Tensor(tensor)] * dims)
@@ -99,7 +99,12 @@ class PairedDataset(Dataset):
             clean_image = cfaAugment(clean_image, r)
             noisy_image = cfaAugment(noisy_image, r)
 
-        return clean_image.to(torch.float32), noisy_image.to(torch.float32)
+        # The data is stored as uint8
+        # and returned as normalized float32
+        return (
+            clean_image.to(torch.float32) / 256.0,
+            noisy_image.to(torch.float32) / 256.0
+        )
 
 def train(paired_dataset, n_epochs=50, loss=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
