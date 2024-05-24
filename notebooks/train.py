@@ -160,7 +160,7 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     with torch.no_grad():
-        outputs = model(inputs_noise[:3].to(device)).cpu()
+        outputs = model((inputs_noise[:3].to(torch.float32) / 256).to(device)).cpu()
 
         fig, axs = plt.subplots(3, 3, figsize=(15, 6))
         for i in range(3):
