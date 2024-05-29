@@ -50,16 +50,16 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
     paths = []
     for root, dirs, files in os.walk(directory):
         # os.walk returns files in arbitrary order
-        for file in sorted(files):
-            if file.endswith(t):
-                paths.append(os.path.join(root, file))
+        for f in sorted(files):
+            if f.endswith(t):
+                paths.append(os.path.join(root, f))
 
     def process_fn(image_path):
         if t == ".npy":
             if expand_cfa_p:
                 return torch.Tensor(expand_cfa(np.load(image_path).astype(np.uint8)))
             else:
-                return torch.Tensor(colorize_cfa(np.load(image_path), rgb_kf).astype(np.uint8)).permute(2,0,1)
+                return torch.Tensor((colorize_cfa(np.load(image_path), rgb_kf) >> 8).astype(np.uint8)).permute(2,0,1)
         else:
              return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 
@@ -124,6 +124,7 @@ def train(paired_dataset, n_epochs=50, loss=None):
 
         for clean_images, noisy_images in paired_loader:
             clean_images, noisy_images = clean_images.to(device), noisy_images.to(device)
+
 
             optimizer.zero_grad()
 
@@ -219,7 +220,7 @@ if __name__ == "__main__":
 
     if not torch.cuda.is_available():
         print("No cuda device")
-        #exit(1)
+        exit(1)
 
     if not (args.epochs or args.model):
         print("Nothing to do!", flush=True)

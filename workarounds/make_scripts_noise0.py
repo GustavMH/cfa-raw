@@ -12,7 +12,6 @@ def write_script(form, ext, path, n):
     filename = f"{name}.sh"
     commands = [
         ["#!/usr/bin/env bash"],
-        ["#SBATCH --ntasks=1 --gres=gpu:titanrtx --cpus-per-task=4 --mem=12000M --time=0:40:00"],
         [f"source {home / 'cfa-raw'}/.venv/bin/activate"],
         [
             f"python3.11 {prog_path}",
