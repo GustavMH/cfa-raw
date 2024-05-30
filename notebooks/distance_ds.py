@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    ds_a     = Path(args.input)
-    ds_b     = Path(args.input)
+    ds_a     = Path(args.a)
+    ds_b     = Path(args.b)
     res_file = Path(args.output) / f"{args.name}.txt"
 
     print(ds_b, ds_a, res_dir)
@@ -51,6 +51,8 @@ if __name__ == "__main__":
     ds_a_paths = findAllFiles(ds_a)
     ds_b_paths = findAllFiles(ds_b)
 
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     losses = [F.mse_loss(a, b) for a, b in zip(ds_a_paths, ds_b_paths)]
 
