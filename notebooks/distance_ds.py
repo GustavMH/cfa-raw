@@ -10,6 +10,13 @@ from   PIL     import Image
 import torch
 import torch.nn.functional as F
 
+import resource
+def using(point=""):
+    usage=resource.getrusage(resource.RUSAGE_SELF)
+    print( '''%s: usertime=%s systime=%s mem=%s mb
+           '''%(point,usage[0],usage[1],
+                usage[2]/1024.0 ), flush=True)
+
 def load_paths(directory):
     paths = []
     for root, dirs, files in os.walk(directory):
@@ -49,16 +56,18 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    print(args)
+    print(args, flush=True)
 
     for folder in args.subfolders:
+        using(folder)
         res_file = Path(args.output) / f"{folder}-det-loss.txt"
 
         ds_b       = Path(args.path) / folder
         ds_b_paths = load_paths(ds_b)
 
-        losses = [F.mse_loss(process_fn(a) / 256.0,
-                             process_fn(b) / 256.0)
-                  for a, b in zip(ds_a_paths, ds_b_paths)]
+        losses = []
+        for a, b in zip(ds_a_paths, ds_b_paths):
+            losses.append(F.mse_loss(process_fn(a) / 256.0,
+                                     process_fn(b) / 256.0))
 
         save_losses(losses, res_file)
