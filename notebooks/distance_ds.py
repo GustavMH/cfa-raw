@@ -37,7 +37,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--a", required=True)
     parser.add_argument("--b", required=True)
-    parser.add_argument("--result", required=True)
+    parser.add_argument("--output", required=True)
     parser.add_argument("--name", required=True)
 
     args = parser.parse_args()
