@@ -10,16 +10,17 @@ from   PIL     import Image
 import torch
 import torch.nn.functional as F
 
-def load_paths(directory, t = ".png"):
+def load_paths(directory):
     paths = []
     for root, dirs, files in os.walk(directory):
         # os.walk returns files in arbitrary order
         for f in sorted(files):
-            if f.endswith(t):
+            if os.path.splitext(f)[1].lower() in ['.png', '.tiff', '.jpeg', '.jpg']:
                 paths.append(os.path.join(root, f))
     return paths
 
 def process_fn(image_path):
+    _, t = os.path.splitext(image_path)
     if t == ".npy":
         return torch.Tensor(np.load(image_path).astype(np.uint8))
     else:
@@ -48,12 +49,14 @@ if __name__ == "__main__":
 
     print(ds_b, ds_a, res_file)
 
-    ds_a_paths = findAllFiles(ds_a)
-    ds_b_paths = findAllFiles(ds_b)
+    ds_a_paths = load_paths(ds_a)
+    ds_b_paths = load_paths(ds_b)
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    losses = [F.mse_loss(a, b) for a, b in zip(ds_a_paths, ds_b_paths)]
+    losses = [F.mse_loss(process_fn(a),
+                         process_fn(b))
+              for a, b in zip(ds_a_paths, ds_b_paths)]
 
     save_losses(losses, res_file)
