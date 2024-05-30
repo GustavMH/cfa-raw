@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
         losses = []
         for a, b in zip(ds_a_paths, ds_b_paths):
-            losses.append(F.mse_loss(process_fn(a) / 256.0,
-                                     process_fn(b) / 256.0))
+            losses.append(F.mse_loss(process_fn(a).to(device) / 256.0,
+                                     process_fn(b).to(device) / 256.0))
 
         save_losses(losses, res_file)
