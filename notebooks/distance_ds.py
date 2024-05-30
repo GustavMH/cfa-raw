@@ -36,27 +36,29 @@ if __name__ == "__main__":
         prog="Dataset distance calculator",
         description="Calculates the L2 distance between a paired dataset, often one before and one after a processing step"
     )
-    parser.add_argument("--a", required=True)
-    parser.add_argument("--b", required=True)
+    parser.add_argument("--clean",  required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--name", required=True)
+    parser.add_argument("--name",   required=True)
+    parser.add_argument("--path",   required=True)
+    parser.add_argument("subfolders", nargs="+", help="Folders to calculate distance against")
 
     args = parser.parse_args()
 
-    ds_a     = Path(args.a)
-    ds_b     = Path(args.b)
-    res_file = Path(args.output) / f"{args.name}.txt"
-
-    print(ds_b, ds_a, res_file)
-
+    ds_a       = Path(args.clean)
     ds_a_paths = load_paths(ds_a)
-    ds_b_paths = load_paths(ds_b)
-
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    losses = [F.mse_loss(process_fn(a),
-                         process_fn(b))
-              for a, b in zip(ds_a_paths, ds_b_paths)]
+    print(args)
 
-    save_losses(losses, res_file)
+    for folder in args.subfolders:
+        res_file = Path(args.output) / f"{folder}-det-loss.txt"
+
+        ds_b       = Path(args.path) / folder
+        ds_b_paths = load_paths(ds_b)
+
+        losses = [F.mse_loss(process_fn(a),
+                             process_fn(b))
+                  for a, b in zip(ds_a_paths, ds_b_paths)]
+
+        save_losses(losses, res_file)
