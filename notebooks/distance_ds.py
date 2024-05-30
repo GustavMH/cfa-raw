@@ -46,7 +46,7 @@ if __name__ == "__main__":
     ds_b     = Path(args.b)
     res_file = Path(args.output) / f"{args.name}.txt"
 
-    print(ds_b, ds_a, res_dir)
+    print(ds_b, ds_a, res_file)
 
     ds_a_paths = findAllFiles(ds_a)
     ds_b_paths = findAllFiles(ds_b)
