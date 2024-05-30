@@ -29,9 +29,9 @@ def load_paths(directory):
 def process_fn(image_path):
     _, t = os.path.splitext(image_path)
     if t == ".npy":
-        return torch.Tensor(np.load(image_path).astype(np.float32))
+        return torch.Tensor(np.load(image_path).astype(np.float16))
     else:
-        return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float32))
+        return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16))
 
 def save_losses(losses, loss_dest):
     with open(loss_dest, "w") as f:
@@ -68,6 +68,6 @@ if __name__ == "__main__":
         losses = []
         for a, b in zip(ds_a_paths, ds_b_paths):
             losses.append(F.mse_loss(process_fn(a).to(device) / 256.0,
-                                     process_fn(b).to(device) / 256.0))
+                                     process_fn(b).to(device) / 256.0).detach().cpu().item())
 
         save_losses(losses, res_file)
