@@ -103,8 +103,8 @@ class PairedDataset(Dataset):
             (32 - h % 32) // 2,
             (32 - h % 32 + 1) // 2
         )
-        clean_image = F.pad(clean_image, pad, mode="reflection")
-        noisy_image = F.pad(noisy_image, pad, mode="reflection")
+        clean_image = F.pad(clean_image, pad, mode="reflect")
+        noisy_image = F.pad(noisy_image, pad, mode="reflect")
 
         # The data is stored as uint8
         # and returned as normalized float32
