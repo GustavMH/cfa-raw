@@ -27,11 +27,7 @@ def load_paths(directory):
     return paths
 
 def process_fn(image_path):
-    _, t = os.path.splitext(image_path)
-    if t == ".npy":
-        return torch.Tensor(np.load(image_path).astype(np.float16))
-    else:
-        return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16))
+    return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.float16))
 
 def save_losses(losses, loss_dest):
     with open(loss_dest, "w") as f:
@@ -40,10 +36,9 @@ def save_losses(losses, loss_dest):
 if __name__ == "__main__":
     # Command-line setup
     parser = argparse.ArgumentParser(
-        prog="Dataset distance calculator",
-        description="Calculates the L2 distance between a paired dataset, often one before and one after a processing step"
+        prog="Dataset quantile calculator",
+        description="Calculates the 1st and 99th quantile in a dataset"
     )
-    parser.add_argument("--clean",  required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--name",   required=True)
     parser.add_argument("--path",   required=True)
@@ -51,23 +46,22 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    ds_a       = Path(args.clean)
-    ds_a_paths = load_paths(ds_a)
-
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     print(args, flush=True)
 
     for folder in args.subfolders:
         using(folder)
-        res_file = Path(args.output) / f"{args.name}-{folder}-det-loss.txt"
 
-        ds_b       = Path(args.path) / folder
-        ds_b_paths = load_paths(ds_b)
+        ds_a       = Path(args.path) / folder
+        ds_a_paths = load_paths(ds_a)
 
-        losses = []
-        for a, b in zip(ds_a_paths, ds_b_paths):
-            losses.append(F.mse_loss(process_fn(a).to(device) / 256.0,
-                                     process_fn(b).to(device) / 256.0).detach().cpu().item())
+        nnth = []
+        onth = []
+        for a in ds_a_paths:
+            img = process_fn(a).to(device)
+            nnth.append(torch.quantile(img / 256.0, 0.99).detach().cpu().item())
+            onth.append(torch.quantile(img / 256.0, 0.01).detach().cpu().item())
 
-        save_losses(losses, res_file)
+        save_losses(nnth, Path(args.output) / f"{args.name}-{folder}-det-99.txt")
+        save_losses(onth, Path(args.output) / f"{args.name}-{folder}-det-1.txt")
