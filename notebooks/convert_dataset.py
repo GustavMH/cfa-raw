@@ -19,7 +19,8 @@ def findAllFiles(path):
     if folders:
         for f in folders:
             res.extend(findAllFiles(os.path.join(path, f)))
-    res.extend([os.path.join(path, f) for f in files if f.endswith(".JPEG") or f.endswith(".jpg")])
+    res.extend([os.path.join(path, f) for f in files
+                if os.path.splitext(f)[1].lower() in ['.png', '.tiff', '.jpeg', '.jpg']])
     return res
 
 
