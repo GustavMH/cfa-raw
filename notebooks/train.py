@@ -59,7 +59,7 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
             if expand_cfa_p:
                 return torch.Tensor(expand_cfa(np.load(image_path).astype(np.uint8)))
             else:
-                return torch.Tensor((colorize_cfa(np.load(image_path), rgb_kf) >> 8).astype(np.uint8)).permute(2,0,1)
+                return torch.Tensor((colorize_cfa(np.load(image_path), rgb_kf)).astype(np.uint8)).permute(2,0,1)
         else:
              return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 

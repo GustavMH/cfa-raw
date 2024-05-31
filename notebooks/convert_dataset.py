@@ -40,9 +40,9 @@ def convert_ds_category(ds_path, res_dir, suffix):
         Image.fromarray(img_rgb).save(save_path_png / f"{n}.png", format="PNG")
 
         # Save CFA
-        img_cfa = cfa.rgb_to_cfa(img_rgb.astype(np.uint16) * 2**8, cfa.rgb_kf)
+        img_cfa = cfa.rgb_to_cfa(img_rgb, cfa.rgb_kf)
 
-        dng.write(img_cfa, filename=str(save_path_dng / str(n)))
+        dng.write(img_cfa.astype(np.uint16) << 8, filename=str(save_path_dng / str(n)))
         np.save(save_path_npy / str(n), img_cfa)
 
 

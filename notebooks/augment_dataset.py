@@ -53,10 +53,10 @@ def add_noise_to_ds_category(ds_path, res_dir, suffix, noise, noise_amt, size):
         # Save Noisy RGB image
         Image.fromarray(img_rgb_noise).save(save_path_png / f"{n}.png", format="PNG")
 
-        img_cfa = cfa.rgb_to_cfa(img_rgb_noise.astype(np.uint16) * 2**8, cfa.rgb_kf)
+        img_cfa = cfa.rgb_to_cfa(img_rgb_noise, cfa.rgb_kf)
 
         # Save noisy CFA
-        dng.write(img_cfa, filename=str(save_path_dng / str(n)))
+        dng.write(img_cfa.astype(np.uint16) << 8, filename=str(save_path_dng / str(n)))
         np.save(save_path_npy / str(n), img_cfa)
 
 def _f(args):
