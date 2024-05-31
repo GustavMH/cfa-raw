@@ -238,7 +238,6 @@ if __name__ == "__main__":
         using("Clean data loaded")
         train_noise = load_images(Path(args.noise) / "train", t=args.type, expand_cfa_p=args.cfa_expand)
         using("Noisy data loaded")
-        print((train_noise.numel() * train_noise.element_size()) / 10**6, "MB", train_noise.shape, train_noise.dtype)
 
         loss = {
             "L2": nn.MSELoss(),
