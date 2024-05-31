@@ -63,12 +63,9 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
         else:
              return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 
-    first  = process_fn(paths[0])
-    res    = torch.zeros([len(paths), *first.shape], dtype=torch.uint8)
-    res[0] = first
-
+    res = []
     for i, path in enumerate(paths[1:]):
-        res[i] = process_fn(path)
+        res.append(process_fn(path))
 
     return res
 
@@ -76,8 +73,7 @@ def cfaAugment(img, rot):
     x, y = [(0,0), (0,1), (1,0), (1,1)][rot]
     c, w, h = img.shape
 
-    # The denoiser has to be aligned to 32x32 px chunks
-    return img[:, x:w+x-32, y:h+y-32]
+    return img[:, x:w+x, y:h+y]
 
 class PairedDataset(Dataset):
     def __init__(self, data_clean, data_noisy, cfa_aug=False):
@@ -98,6 +94,17 @@ class PairedDataset(Dataset):
 
             clean_image = cfaAugment(clean_image, r)
             noisy_image = cfaAugment(noisy_image, r)
+
+        # The denoiser has to be aligned to 32x32 px chunks
+        _, w, h = clean_image.shape
+        pad = (
+            (32 - w % 32) // 2,
+            (32 - w % 32 + 1) // 2,
+            (32 - h % 32) // 2,
+            (32 - h % 32 + 1) // 2
+        )
+        clean_image = F.pad(clean_image, pad, mode="reflection")
+        noisy_image = F.pad(noisy_image, pad, mode="reflection")
 
         # The data is stored as uint8
         # and returned as normalized float32
