@@ -36,7 +36,7 @@ def using(point=""):
 def expand_cfa(tensor, dims=3):
     return torch.stack([torch.Tensor(tensor)] * dims)
 
-def load_images(directory, t = ".png", expand_cfa_p = False):
+def load_images(directory, t = ".png", expand_cfa_p = False, crop=False):
     """
     Load images from dir
 
@@ -59,13 +59,16 @@ def load_images(directory, t = ".png", expand_cfa_p = False):
             if expand_cfa_p:
                 return torch.Tensor(expand_cfa(np.load(image_path).astype(np.uint8)))
             else:
-                return torch.Tensor((colorize_cfa(np.load(image_path), rgb_kf)).astype(np.uint8)).permute(2,0,1)
+                return torch.Tensor((colorize_cfa(np.load(image_path), rgb_kf) >> 8).astype(np.uint8)).permute(2,0,1)
         else:
              return torch.Tensor(np.array(Image.open(image_path).convert('RGB'), dtype=np.uint8)).permute(2,0,1)
 
-    res = []
+    first  = process_fn(paths[0])
+    res    = torch.zeros([len(paths), *first.shape], dtype=torch.uint8)
+    res[0] = first
+
     for i, path in enumerate(paths[1:]):
-        res.append(process_fn(path))
+        res[i] = process_fn(path)
 
     return res
 
@@ -73,7 +76,8 @@ def cfaAugment(img, rot):
     x, y = [(0,0), (0,1), (1,0), (1,1)][rot]
     c, w, h = img.shape
 
-    return img[:, x:w+x, y:h+y]
+    # The denoiser has to be aligned to 32x32 px chunks
+    return img[:, x:w+x-32, y:h+y-32]
 
 class PairedDataset(Dataset):
     def __init__(self, data_clean, data_noisy, cfa_aug=False):
@@ -94,17 +98,6 @@ class PairedDataset(Dataset):
 
             clean_image = cfaAugment(clean_image, r)
             noisy_image = cfaAugment(noisy_image, r)
-
-        # The denoiser has to be aligned to 32x32 px chunks
-        _, w, h = clean_image.shape
-        pad = (
-            (32 - w % 32) // 2,
-            (32 - w % 32 + 1) // 2,
-            (32 - h % 32) // 2,
-            (32 - h % 32 + 1) // 2
-        )
-        clean_image = F.pad(clean_image, pad, mode="reflect")
-        noisy_image = F.pad(noisy_image, pad, mode="reflect")
 
         # The data is stored as uint8
         # and returned as normalized float32
@@ -238,6 +231,7 @@ if __name__ == "__main__":
         using("Clean data loaded")
         train_noise = load_images(Path(args.noise) / "train", t=args.type, expand_cfa_p=args.cfa_expand)
         using("Noisy data loaded")
+        print((train_noise.numel() * train_noise.element_size()) / 10**6, "MB", train_noise.shape, train_noise.dtype)
 
         loss = {
             "L2": nn.MSELoss(),

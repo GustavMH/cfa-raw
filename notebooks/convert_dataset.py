@@ -16,15 +16,16 @@ from   itertools import product
 def findAllFiles(path):
     res = []
     path, folders, files = next(os.walk(path))
-    if folders:
-        for f in folders:
-            res.extend(findAllFiles(os.path.join(path, f)))
+
+    for f in folders:
+        res.extend(findAllFiles(os.path.join(path, f)))
+
     res.extend([os.path.join(path, f) for f in files
                 if os.path.splitext(f)[1].lower() in ['.png', '.tiff', '.jpeg', '.jpg']])
-    return res
+    return res[:100]
 
 
-def convert_ds_category(ds_path, res_dir, suffix):
+def convert_ds_category(ds_path, res_dir, suffix, size):
     save_path_png = res_dir / "png" / suffix
     save_path_dng = res_dir / "dng" / suffix
     save_path_npy = res_dir / "npy" / suffix
@@ -36,6 +37,14 @@ def convert_ds_category(ds_path, res_dir, suffix):
 
     for n, img in enumerate(imgs):
         img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
+
+        # Center crop
+        h, w, c  = img_rgb.shape
+        offset_x = (h - size) // 2
+        offset_y = (w - size) // 2
+
+        img_crop      = np.zeros((size,size,c))
+        img_crop      = img_rgb[offset_x:(offset_x+size), offset_y:(offset_y+size)]
 
         # Save RGB image
         Image.fromarray(img_rgb).save(save_path_png / f"{n}.png", format="PNG")
@@ -53,8 +62,9 @@ if __name__ == "__main__":
         prog="dataset CFA converter",
         description="Converts a dataset to CFA, outputs in .npy (CFA), .dng (CFA), and .png (Unprocessed RGB)."
     )
-    parser.add_argument("--input", required=True)
+    parser.add_argument("--input",  required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--size",   required=True)
 
     args = parser.parse_args()
 
@@ -68,4 +78,4 @@ if __name__ == "__main__":
 
     # Process
     for suffix in ds_cats:
-        convert_ds_category(ds_path, res_dir, suffix)
+        convert_ds_category(ds_path, res_dir, suffix, int(args.size))
