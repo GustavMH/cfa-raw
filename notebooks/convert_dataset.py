@@ -47,10 +47,10 @@ def convert_ds_category(ds_path, res_dir, suffix, size):
         img_crop      = img_rgb[offset_x:(offset_x+size), offset_y:(offset_y+size)]
 
         # Save RGB image
-        Image.fromarray(img_rgb).save(save_path_png / f"{n}.png", format="PNG")
+        Image.fromarray(img_crop).save(save_path_png / f"{n}.png", format="PNG")
 
         # Save CFA
-        img_cfa = cfa.rgb_to_cfa(img_rgb, cfa.rgb_kf)
+        img_cfa = cfa.rgb_to_cfa(img_crop, cfa.rgb_kf)
 
         dng.write(img_cfa.astype(np.uint16) << 8, filename=str(save_path_dng / str(n)))
         np.save(save_path_npy / str(n), img_cfa)
