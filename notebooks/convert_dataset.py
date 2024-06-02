@@ -22,7 +22,7 @@ def findAllFiles(path):
 
     res.extend([os.path.join(path, f) for f in files
                 if os.path.splitext(f)[1].lower() in ['.png', '.tiff', '.jpeg', '.jpg']])
-    return res[:100]
+    return res
 
 
 def convert_ds_category(ds_path, res_dir, suffix, size):
