@@ -21,10 +21,7 @@ from   torch.cuda.amp   import GradScaler
 from denoisingautoencoder import DenoisingAutoencoder
 from cfa                  import colorize_cfa, rgb_kf
 
-import gc
-
 # Memory benchmark
-import tracemalloc
 import resource
 import sys
 def using(point=""):
@@ -68,7 +65,7 @@ def load_images(directory, t = ".png", expand_cfa_p = False, crop=False):
     res[0] = first
 
     for i, path in enumerate(paths[1:]):
-        res[i] = process_fn(path)
+        res[i+1] = process_fn(path)
 
     return res
 
@@ -100,7 +97,7 @@ class PairedDataset(Dataset):
             clean_image = cfaAugment(clean_image, r)
             noisy_image = cfaAugment(noisy_image, r)
 
-        if self.cfa_rand_scale:
+        if not self.cfa_rand_scale == None:
             r, g, b = self.cfa_rand_scale[idx]
             noisy_image = noisy_image.to(torch.float32)
             noisy_image[0] *= r
@@ -253,7 +250,7 @@ if __name__ == "__main__":
 
         scale_list = None
         if args.cfa_scale_file:
-            scale_list = torch.Tensor(np.load(f))
+            scale_list = torch.Tensor(np.load(Path(args.cfa_scale_file)))
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment, scale_list)
         using("Dataset created")
