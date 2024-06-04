@@ -188,7 +188,7 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
 def validate(model, val_clean, val_noise, rand_list=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    paired_dataset = DataLoader(PairedDataset(val_clean, val_noise, cfa_rand_list=rand_list), batch_size=128, shuffle=False)
+    paired_dataset = DataLoader(PairedDataset(val_clean, val_noise, cfa_rand_scale=rand_list), batch_size=128, shuffle=False)
 
     model.eval()
     model.to(device)
