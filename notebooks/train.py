@@ -263,6 +263,10 @@ if __name__ == "__main__":
         val_clean = load_images(Path(args.clean) / "val", t=".png")
         val_noise = load_images(Path(args.noise) / "val", t=args.type, expand_cfa_p=args.cfa_expand)
 
+        scale_list = None
+        if args.cfa_scale_file:
+            scale_list = torch.Tensor(np.load(Path(args.cfa_scale_file)))
+
         losses = validate(model, val_clean, val_noise, scale_list)
         save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
 
