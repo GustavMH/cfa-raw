@@ -185,10 +185,10 @@ def validation_imgs(model, inputs_clean, inputs_noise, savepath=None):
             plt.show()
 
 
-def validate(model, val_clean, val_noise):
+def validate(model, val_clean, val_noise, rand_list=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    paired_dataset = DataLoader(PairedDataset(val_clean, val_noise), batch_size=128, shuffle=False)
+    paired_dataset = DataLoader(PairedDataset(val_clean, val_noise, cfa_rand_list=rand_list), batch_size=128, shuffle=False)
 
     model.eval()
     model.to(device)
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         val_clean = load_images(Path(args.clean) / "val", t=".png")
         val_noise = load_images(Path(args.noise) / "val", t=args.type, expand_cfa_p=args.cfa_expand)
 
-        losses = validate(model, val_clean, val_noise)
+        losses = validate(model, val_clean, val_noise, scale_list)
         save_losses(losses, loss_dest=Path(args.output) / f"{args.name}-val-loss.txt")
 
         validation_imgs(model, val_clean, val_noise, savepath=Path(args.output) / f"{args.name}-imgs.png")
