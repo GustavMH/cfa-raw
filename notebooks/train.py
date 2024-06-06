@@ -79,6 +79,7 @@ def cfaAugment(img, rot):
 class PairedDataset(Dataset):
     def __init__(self, data_clean, data_noisy, cfa_aug=False, cfa_rand_scale=False, cfa_aw=False):
         self.cfa_aug = cfa_aug
+        self.cfa_aw = cfa_aw
         self.cfa_rand_scale = cfa_rand_scale
         self.data_clean = data_clean
         self.data_noisy = data_noisy
@@ -258,7 +259,7 @@ if __name__ == "__main__":
         if args.cfa_scale_file:
             scale_list = torch.Tensor(np.load(Path(args.cfa_scale_file)))
 
-        paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment, scale_list)
+        paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment, scale_list, args.cfa_aw)
         using("Dataset created")
         model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
