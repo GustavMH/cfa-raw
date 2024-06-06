@@ -117,12 +117,12 @@ class PairedDataset(Dataset):
 
         return clean_image, noisy_image
 
-def train(paired_dataset, n_epochs=50, loss=None):
+def train(paired_dataset, n_epochs=50, loss=None, k_factor=64):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     paired_loader  = DataLoader(paired_dataset, batch_size=32, shuffle=True)
 
-    model = DenoisingAutoencoder().to(device)
+    model = DenoisingAutoencoder(ks=k_factor).to(device)
 
     criterion = loss
     optimizer = optim.AdamW(model.parameters(), lr=1e-4)
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment, scale_list, args.cfa_aw)
         using("Dataset created")
-        model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
+        model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss, k_factor=int(args.model_kernel_factor))
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:
