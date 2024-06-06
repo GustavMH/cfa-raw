@@ -225,6 +225,7 @@ if __name__ == "__main__":
     parser.add_argument("--cfa-expand", action="store_true")
     parser.add_argument("--cfa-aw", action="store_true")
     parser.add_argument("--cfa-scale-file")
+    parser.add_argument("--model-kernel-factor")
 
     args = parser.parse_args()
 
