@@ -6,7 +6,7 @@ class DenoisingAutoencoder(nn.Module):
         super(DenoisingAutoencoder, self).__init__()
         # Encoder
         self.enc1 = nn.Sequential(
-            nn.Conv2d(channels, 4, kernel_size=4, stride=2, padding=1),
+            nn.Conv2d(channels, 8, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(8),
             nn.ReLU(True))
         self.enc2 = nn.Sequential(

@@ -77,7 +77,7 @@ def cfaAugment(img, rot):
     return img[:, x:w+x-32, y:h+y-32]
 
 class PairedDataset(Dataset):
-    def __init__(self, data_clean, data_noisy, cfa_aug=False, cfa_rand_scale=False):
+    def __init__(self, data_clean, data_noisy, cfa_aug=False, cfa_rand_scale=False, cfa_aw=False):
         self.cfa_aug = cfa_aug
         self.cfa_rand_scale = cfa_rand_scale
         self.data_clean = data_clean
@@ -88,8 +88,10 @@ class PairedDataset(Dataset):
         return len(self.data_clean)
 
     def __getitem__(self, idx):
-        clean_image = self.data_clean[idx]
-        noisy_image = self.data_noisy[idx]
+        # The data is stored as uint8
+        # and returned as normalized float32
+        clean_image = self.data_clean[idx].to(torch.float32) / 255
+        noisy_image = self.data_noisy[idx].to(torch.float32) / 255
 
         if self.cfa_aug:
             r = randint(0,3)
@@ -98,18 +100,21 @@ class PairedDataset(Dataset):
             noisy_image = cfaAugment(noisy_image, r)
 
         if not self.cfa_rand_scale == None:
-            r, g, b = self.cfa_rand_scale[idx]
-            noisy_image = noisy_image.to(torch.float32)
-            noisy_image[0] *= r
-            noisy_image[1] *= g
-            noisy_image[2] *= b
+            for a, channel in zip(self.cfa_rand_scale[idx], noisy_image):
+                channel *= a
 
-        # The data is stored as uint8
-        # and returned as normalized float32
-        return (
-            clean_image.to(torch.float32) / 256.0,
-            noisy_image.to(torch.float32) / 256.0
-        )
+        if self.cfa_aw:
+            # White Balance
+            avgs = torch.mean(img, (1,2))
+            for avg, channel in zip(avgs, noisy_image):
+                channel *= 1 / avg
+
+            # White level
+            whitelevel   = torch.quantile(noisy_image, 0.99)
+            noisy_image *= 1 / whitelevel
+            noisy_image  = torch.clamp(noisy_image, 0, 1)
+
+        return clean_image, noisy_image
 
 def train(paired_dataset, n_epochs=50, loss=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -217,6 +222,7 @@ if __name__ == "__main__":
     parser.add_argument("--loss", help="Loss function to use during training", default="L2", choices=["L1", "L1smooth", "L2"])
     parser.add_argument("--cfa-augment", action="store_true")
     parser.add_argument("--cfa-expand", action="store_true")
+    parser.add_argument("--cfa-aw", action="store_true")
     parser.add_argument("--cfa-scale-file")
 
     args = parser.parse_args()
