@@ -6,46 +6,46 @@ class DenoisingAutoencoder(nn.Module):
         super(DenoisingAutoencoder, self).__init__()
         # Encoder
         self.enc1 = nn.Sequential(
-            nn.Conv2d(channels, 64, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(channels, 4, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(8),
             nn.ReLU(True))
         self.enc2 = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(8, 16, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(16),
             nn.ReLU(True))
         self.enc3 = nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(16, 32, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(True))
         self.enc4 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(True))
         self.enc5 = nn.Sequential(
-            nn.Conv2d(512, 512, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(512),
+            nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(True))
 
         # Decoder
         self.dec1 = nn.Sequential(
-            nn.ConvTranspose2d(512, 512, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(512),
+            nn.ConvTranspose2d(64, 64, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(True),
             nn.Dropout(0.5))
         self.dec2 = nn.Sequential(
-            nn.ConvTranspose2d(1024, 256, kernel_size=4, stride=2, padding=1), # the 1024 comes from concatenation
-            nn.BatchNorm2d(256),
-            nn.ReLU(True))
-        self.dec3 = nn.Sequential(
-            nn.ConvTranspose2d(512, 128, kernel_size=4, stride=2, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(True))
-        self.dec4 = nn.Sequential(
-            nn.ConvTranspose2d(256, 64, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1), # the 1024 comes from concatenation
             nn.BatchNorm2d(64),
             nn.ReLU(True))
+        self.dec3 = nn.Sequential(
+            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(True))
+        self.dec4 = nn.Sequential(
+            nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(True))
         self.dec5 = nn.Sequential(
-            nn.ConvTranspose2d(128, 3, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(8, 3, kernel_size=4, stride=2, padding=1),
             nn.Tanh())
 
     def forward(self, x):
