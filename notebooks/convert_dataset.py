@@ -25,7 +25,7 @@ def findAllFiles(path):
     return res
 
 
-def convert_ds_category(ds_path, res_dir, suffix, size):
+def convert_ds_category(ds_path, res_dir, suffix, size, rand_scale=False):
     save_path_png = res_dir / "png" / suffix
     save_path_dng = res_dir / "dng" / suffix
     save_path_npy = res_dir / "npy" / suffix
@@ -34,8 +34,14 @@ def convert_ds_category(ds_path, res_dir, suffix, size):
     os.makedirs(save_path_npy, exist_ok=True)
 
     imgs = findAllFiles(ds_path / suffix)
+    n_imgs = len(imgs)
 
-    for n, img in enumerate(imgs):
+    rscale        = np.zeros((n_imgs, 3))
+    rscale       += np.random.uniform(.5, 1, (n_imgs,1))
+    rscale[:, 0] *= np.random.uniform(1/2.4, 1/1.9, (n_imgs))
+    rscale[:, 2] *= np.random.uniform(1/1.9, 1/1.5, (n_imgs))
+
+    for n, (img, scaling) in enumerate(zip(imgs, rscale)):
         img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
 
         # Center crop
@@ -45,6 +51,10 @@ def convert_ds_category(ds_path, res_dir, suffix, size):
 
         img_crop      = np.zeros((size,size,c))
         img_crop      = img_rgb[offset_x:(offset_x+size), offset_y:(offset_y+size)]
+
+        if rand_scale:
+            for i in range(3):
+                img_crop[:, :, i] *= scaling[i]
 
         # Save RGB image
         Image.fromarray(img_crop).save(save_path_png / f"{n}.png", format="PNG")
@@ -65,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--input",  required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--size",   required=True)
+    parser.add_argument("--rand-scale", action="store_true")
 
     args = parser.parse_args()
 
@@ -78,4 +89,4 @@ if __name__ == "__main__":
 
     # Process
     for suffix in ds_cats:
-        convert_ds_category(ds_path, res_dir, suffix, int(args.size))
+        convert_ds_category(ds_path, res_dir, suffix, int(args.size), args.rand_scale)
