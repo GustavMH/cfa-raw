@@ -36,13 +36,13 @@ def convert_ds_category(ds_path, res_dir, suffix, size, rand_scale=False):
     imgs = findAllFiles(ds_path / suffix)
     n_imgs = len(imgs)
 
-    rscale        = np.zeros((n_imgs, 3))
+    rscale        = np.zeros((n_imgs, 3), dtype=np.float64)
     rscale       += np.random.uniform(.5, 1, (n_imgs,1))
     rscale[:, 0] *= np.random.uniform(1/2.4, 1/1.9, (n_imgs))
     rscale[:, 2] *= np.random.uniform(1/1.9, 1/1.5, (n_imgs))
 
     for n, (img, scaling) in enumerate(zip(imgs, rscale)):
-        img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.uint8)
+        img_rgb = np.array(Image.open(img).convert("RGB"), dtype=np.float64)
 
         # Center crop
         h, w, c  = img_rgb.shape
@@ -55,6 +55,8 @@ def convert_ds_category(ds_path, res_dir, suffix, size, rand_scale=False):
         if rand_scale:
             for i in range(3):
                 img_crop[:, :, i] *= scaling[i]
+
+        img_crop = img_crop.astype(np.uint8)
 
         # Save RGB image
         Image.fromarray(img_crop).save(save_path_png / f"{n}.png", format="PNG")
