@@ -106,7 +106,7 @@ class PairedDataset(Dataset):
 
         if self.cfa_aw:
             # White Balance
-            avgs = torch.mean(img, (1,2))
+            avgs = torch.mean(noisy_image, (1,2))
             for avg, channel in zip(avgs, noisy_image):
                 channel *= 1 / avg
 
