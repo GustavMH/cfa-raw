@@ -3,7 +3,7 @@ from   torch import nn
 
 class DenoisingUnet(nn.Module):
     def __init__(self, channels=3, ks=64):
-        super(DenoisingAutoencoder, self).__init__()
+        super(DenoisingUnet, self).__init__()
         # Encoder
         self.enc1 = nn.Sequential(
             nn.Conv2d(channels, ks, kernel_size=4, stride=2, padding=1),
@@ -70,7 +70,5 @@ class DenoisingUnet(nn.Module):
 
 
 if __name__ == "__main__":
-    model = DenoisingUnet(ks=8)
-    test = torch.rand((5,3,64,64), dtype=torch.float32)
-    res = model.forward(test)
-    print(test.shape, res.shape)
+    model = DenoisingUnet()
+    print(sum(p.numel() for p in model.parameters() if p.requires_grad))
