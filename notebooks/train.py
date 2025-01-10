@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
         paired_dataset = PairedDataset(train_clean, train_noise, args.cfa_augment, scale_list, args.cfa_aw)
         using("Dataset created")
-        model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss, k_factor=int(args.model_kernel_factor))
+        model = train(paired_dataset, n_epochs=int(args.epochs), loss=loss)
         save_model(model, model_dest=Path(args.output) / f"{args.name}-model.pkl")
 
     if args.model:

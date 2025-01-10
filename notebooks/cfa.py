@@ -2,7 +2,23 @@
 
 import numpy as np
 
-def rgb_to_cfa(img: np.ndarray, kernel: np.ndarray):
+def sparse_ones(shape: tuple, coords: list):
+    """Takes a tuple for SHAPE, and a list of indicies COORDS.
+
+    Returns an array ARR, where ARR.shape = SHAPE and there is a 1 at every
+    indicie in COORDS"""
+
+    arr = np.zeros(shape)
+    for coor in coords:
+        arr[coor] = 1.0
+
+    return arr
+
+
+RGB_KF = sparse_ones((3,2,2), [(0,0,1),(1,0,0),(2,1,0),(1,1,1)])
+
+
+def rgb_to_cfa(img: np.ndarray, kernel=RGB_KF):
     """ Create a 2d np.array conceptually equivalent to
     'conv2d^T(conv2d(img, kernel), kernel).sum(dim=2)'
 
@@ -26,7 +42,7 @@ def rgb_to_cfa(img: np.ndarray, kernel: np.ndarray):
     return res
 
 
-def colorize_cfa(img: np.ndarray, kernel: np.ndarray):
+def colorize_cfa(img: np.ndarray, kernel=RGB_KF):
     """Used to visualize the sensor pattern
 
     conceptually equivalent to
@@ -46,16 +62,3 @@ def colorize_cfa(img: np.ndarray, kernel: np.ndarray):
     return res
 
 
-def sparse_ones(shape: tuple, coords: list):
-    """Takes a tuple for SHAPE, and a list of indicies COORDS.
-
-    Returns an array ARR, where ARR.shape = SHAPE and there is a 1 at every
-    indicie in COORDS"""
-
-    arr = np.zeros(shape)
-    for coor in coords:
-        arr[coor] = 1.0
-
-    return arr
-
-rgb_kf  = sparse_ones((3,2,2), [(0,0,1),(1,0,0),(2,1,0),(1,1,1)])
