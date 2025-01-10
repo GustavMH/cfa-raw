@@ -25,6 +25,8 @@ rgb2xyz= t.tensor([
 
 d65_white = t.tensor([ 0.950456, 1, 1.088754 ])
 
+cbrt_lut = t.tensor([math.cbrt(r) if r > 0.008856 else 7.787 * r + 16 / 116.0 for r in t.linspace(0,1,65535)])
+
 def color_conv_mat(xyz, mat):
     i = mat[0,0] * xyz[0] + mat[1,0] * xyz[1] + mat[2,0] * xyz[2]
     j = mat[0,1] * xyz[0] + mat[1,1] * xyz[1] + mat[2,1] * xyz[2]
@@ -34,7 +36,9 @@ def color_conv_mat(xyz, mat):
 
 def xyz2lab(xyz):
     res = t.zeros(xyz.shape)
-    crt = t.pow(xyz, 1/3)
+
+    # TODO LUT
+    crt = cbrt_lut.gather(0, (xyz.view(-1) * 65535).to(t.int64)).view(xyz.shape)
     for i, v in enumerate(d65_white):
         crt[i] /= v*100
     res[0] = 166 *  crt[1] - 16
@@ -69,10 +73,10 @@ def rgb_to_cfa(img, kernel=BAYER_KF):
 
 K_Z  = [[0] * 3] * 3
 K_RB = [[.25, .5, .25],
-        [ .5,  0,  .5],
+        [ .5,  1,  .5],
         [.25, .5, .25]]
 K_G  = [[  0,.25,   0],
-        [.25,  0, .25],
+        [.25,  1, .25],
         [  0,.25,   0]]
 
 def bilinear(img):
@@ -82,56 +86,99 @@ def bilinear(img):
         [ K_Z, K_Z, K_RB]
     ])
 
-    res  = img.clone().unsqueeze(0)
-    res += F.conv2d(res, weight=kernel, padding=1)
+    res = F.conv2d(img.clone().unsqueeze(0), weight=kernel, padding=1)
     return res.squeeze(0)
 
 def ahd(img):
+    import time
+
+    start = time.time()
     # AHD assumes the CIErgb colorspace
     c, h, w = img.shape
 
     v_kf = t.tensor([[[[-1,2,2,2,-1]]]]) / 4
     h_kf = v_kf.transpose(2, 3)
 
-    res = img.clone().unsqueeze(0).unsqueeze(0)
+    res = img.unsqueeze(0).unsqueeze(0)
 
+    end = time.time()
+    print("INIT", end - start)
+    start = time.time()
     # Horizontal/vertical interpolation
-    G_vb = t.zeros((1,1,h,w))
+    G_vb, G_vr, G_hb, G_hr = t.zeros((4,1,1,h,w))
     G_vb[:, :, 0::2, 1::2] += F.conv2d(res[:,:,1,0:,1:], weight=v_kf, padding=[0,2], stride=2)
-    G_vr = t.zeros((1,1,h,w))
     G_vr[:, :, 1::2, 0::2] += F.conv2d(res[:,:,1,1:,0:], weight=v_kf, padding=[0,2], stride=2)
-
-    G_hb = t.zeros((1,1,h,w))
     G_hb[:, :, 0::2, 1::2] += F.conv2d(res[:,:,1,0:,1:], weight=h_kf, padding=[2,0], stride=2)
-    G_hr = t.zeros((1,1,h,w))
     G_hr[:, :, 1::2, 0::2] += F.conv2d(res[:,:,1,1:,0:], weight=h_kf, padding=[2,0], stride=2)
 
+    end = time.time()
+    print("Horizontal/vertical interpolation", end - start)
+
+    start = time.time()
     # Candidate red-green, blue-green difference pixels
-    Rv  = res[:,:,0] - G_vr
-    Rv += F.conv2d(Rv, t.tensor([[K_RB]]), padding=1)
-    Bv  = res[:,:,2] - G_vb
-    Bv += F.conv2d(Bv, t.tensor([[K_RB]]), padding=1)
+    Rv  = F.conv2d(res[:,:,0] - G_vr, t.tensor([[K_RB]]), padding=1)
+    Bv  = F.conv2d(res[:,:,2] - G_vb, t.tensor([[K_RB]]), padding=1)
     Gv  = res[:,:,1] + G_vb + G_vr
     fv  = t.stack([Gv+Rv, Gv, Gv+Bv], dim=2)
 
-    Rh  = res[:,:,0] - G_hr
-    Rh += F.conv2d(Rh, t.tensor([[K_RB]]), padding=1)
-    Bh  = res[:,:,2] - G_hb
-    Bh += F.conv2d(Bh, t.tensor([[K_RB]]), padding=1)
+    Rh  = F.conv2d(res[:,:,0] - G_hr, t.tensor([[K_RB]]), padding=1)
+    Bh  = F.conv2d(res[:,:,2] - G_hb, t.tensor([[K_RB]]), padding=1)
     Gh  = res[:,:,1] + G_hr + G_hb
     fh  = t.stack([Gh+Rh, Gh, Gh+Bh], dim=2)
 
+    end = time.time()
+    print("Diff pixels", end - start)
+
+    start = time.time()
     # Homogeneity maps
     # CIErgb -> CIELab
-    fv_lab = xyz2lab(color_conv_mat(fv[0,0], rgb2xyz))
-    fh_lab = xyz2lab(color_conv_mat(fh[0,0], rgb2xyz))
+    fv_l, fv_a, fv_b = xyz2lab(color_conv_mat(fv[0,0], rgb2xyz)).unsqueeze(1)
+    fh_l, fh_a, fh_b = xyz2lab(color_conv_mat(fh[0,0], rgb2xyz)).unsqueeze(1)
+
+    end = time.time()
+    print("Color conversion", end - start)
+
+    start = time.time()
 
     # delta = 1, L2
-    dir_kf = sparse_ones((4,3,3),[(0,1,0),(1,0,1),(2,2,1),(3,1,2)])
+    dir_kf = (
+        sparse_ones((4,3,3),[(0,1,1),(1,1,1),(2,1,1),(3,1,1)]) -
+        sparse_ones((4,3,3),[(0,1,0),(1,0,1),(2,2,1),(3,1,2)])
+    ).unsqueeze(1)
+    fv_ldiff = t.abs(F.conv2d(fv_l, weight=dir_kf, padding=1))
+    fv_cdiff = (
+        t.square(F.conv2d(fv_a, weight=dir_kf, padding=1)) +
+        t.square(F.conv2d(fv_b, weight=dir_kf, padding=1))
+    )
+    fh_ldiff = t.abs(F.conv2d(fh_l, weight=dir_kf, padding=1))
+    fh_cdiff = (
+        t.square(F.conv2d(fh_a, weight=dir_kf, padding=1)) +
+        t.square(F.conv2d(fh_b, weight=dir_kf, padding=1))
+    )
 
-    return t.clamp(fh_lab, 0, 1).squeeze(0).squeeze(0)
+    leps = t.minimum(
+        t.maximum(fh_ldiff[0], fh_ldiff[2]),
+        t.maximum(fv_ldiff[1], fv_ldiff[3])
+    )
+    ceps = t.minimum(
+        t.maximum(fh_cdiff[0], fh_cdiff[2]),
+        t.maximum(fv_cdiff[1], fv_cdiff[3])
+    )
 
-img = (pil_to_tensor(Image.open("./unknown.png")).to(t.float32)) / 255
-cfa = rgb_to_cfa(img)
+    fv_hom = t.logical_and(fv_ldiff <= leps, fv_cdiff <= ceps).sum(0)
+    fh_hom = t.logical_and(fh_ldiff <= leps, fh_cdiff <= ceps).sum(0)
+
+    vh_hom = fv_hom >= fh_hom
+
+    res = fv * vh_hom + fh * (~ vh_hom)
+
+    end = time.time()
+    print("Homogeneity maps", end - start)
+
+    return t.clamp(res, 0, 1).squeeze(0).squeeze(0)
+
+#img = (pil_to_tensor(Image.open("./unknown.png")).to(t.float32)) / 255
+#img = (pil_to_tensor(Image.open("/home/gustav/Pictures/dumb-shit/297.jpeg")).to(t.float32)) / 255
+#cfa = rgb_to_cfa(img)
 dem = np.array(ahd(cfa))
-Image.fromarray((np.array(dem) * 255).transpose(1,2,0).astype(np.uint8)).resize((400,400), 0).save("ex.png")
+Image.fromarray((np.array(dem) * 255).transpose(1,2,0).astype(np.uint8)).save("ex.png")
